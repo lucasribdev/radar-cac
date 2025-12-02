@@ -1,4 +1,4 @@
-Welcome to your new TanStack app! 
+Welcome to your new TanStack app!
 
 # Getting Started
 
@@ -62,24 +62,39 @@ create table if not exists public.submissions (
   result public.process_result_enum not null,
   date_protocol date not null,
   date_decision date not null,
-  days_diff integer not null,
   constraint submissions_pkey primary key (id)
 ) tablespace pg_default;
 ```
 
 Em projetos novos do Supabase, a função `gen_random_uuid()` vem habilitada pelo pacote `pgcrypto`. Se o banco retornar erro, habilite com `create extension if not exists "pgcrypto";`.
 
+### View de estatísticas
+
+View usada para métricas agregadas por tipo de processo:
+
+```sql
+create view submissions_stats as
+select
+  process_type,
+  count(*) as total,
+  avg(date_decision - date_protocol) as avg_days,
+  min(date_decision - date_protocol) as min_days,
+  max(date_decision - date_protocol) as max_days
+from submissions
+group by process_type;
+```
+
+Ela espera que `date_decision` e `date_protocol` estejam preenchidos para calcular as diferenças de dias.
+
 ## Linting & Formatting
 
 This project uses [Biome](https://biomejs.dev/) for linting and formatting. The following scripts are available:
-
 
 ```bash
 npm run lint
 npm run format
 npm run check
 ```
-
 
 ## Shadcn
 
@@ -89,9 +104,8 @@ Add components using the latest version of [Shadcn](https://ui.shadcn.com/).
 pnpx shadcn@latest add button
 ```
 
-
-
 ## Routing
+
 This project uses [TanStack Router](https://tanstack.com/router). The initial setup is a file based router. Which means that the routes are managed as files in `src/routes`.
 
 ### Adding A Route
@@ -127,8 +141,8 @@ In the File Based Routing setup the layout is located in `src/routes/__root.tsx`
 Here is an example layout that includes a header:
 
 ```tsx
-import { Outlet, createRootRoute } from '@tanstack/react-router'
-import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
+import { Outlet, createRootRoute } from "@tanstack/react-router";
+import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 
 import { Link } from "@tanstack/react-router";
 
@@ -145,13 +159,12 @@ export const Route = createRootRoute({
       <TanStackRouterDevtools />
     </>
   ),
-})
+});
 ```
 
 The `<TanStackRouterDevtools />` component is not required so you can remove it if you don't want it in your layout.
 
 More information on layouts can be found in the [Layouts documentation](https://tanstack.com/router/latest/docs/framework/react/guide/routing-concepts#layouts).
-
 
 ## Data Fetching
 
