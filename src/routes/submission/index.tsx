@@ -1,3 +1,6 @@
+/** biome-ignore-all lint/correctness/noChildrenProp: <usamos a prop children no tanstack form> */
+import type { AnyFieldApi } from "@tanstack/react-form";
+import { useForm } from "@tanstack/react-form";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Send } from "lucide-react";
 import { useState } from "react";
@@ -46,49 +49,60 @@ const processResultOptions = PROCESS_RESULT_ENUM.map((value) => ({
 }));
 
 type FormData = {
-	tipoProcesso: ProcessTypeEnum | "";
+	processType: ProcessTypeEnum | "";
 	om: string;
-	dataProtocolo: string;
-	dataDeferimento: string;
-	resultado: ProcessResultEnum | "";
+	dateProtocol: string;
+	dateDecision: string;
+	result: ProcessResultEnum | "";
 };
 
-const omsPoliciaFederal: { sigla: string; nome: string }[] = [];
+function FieldInfo({ field }: { field: AnyFieldApi }) {
+	return (
+		<>
+			{field.state.meta.isTouched && !field.state.meta.isValid ? (
+				<em>{field.state.meta.errors.join(", ")}</em>
+			) : null}
+			<em>{field.state.meta.isValidating ? "Validando..." : null}</em>
+		</>
+	);
+}
 
 function Submission() {
 	const navigate = useNavigate();
 	const { toast } = useToast();
-	const [formData, setFormData] = useState<FormData>({
-		tipoProcesso: "",
-		om: "",
-		dataProtocolo: "",
-		dataDeferimento: "",
-		resultado: "",
-	});
 	const [aceiteTermos, setAceiteTermos] = useState(false);
 
-	const handleSubmit = (e: React.FormEvent) => {
-		e.preventDefault();
+	const form = useForm({
+		defaultValues: {
+			processType: "",
+			om: "",
+			dateProtocol: "",
+			dateDecision: "",
+			result: "",
+		} as FormData,
+		onSubmit: async ({ value }) => {
+			console.log(value);
 
-		if (!aceiteTermos) {
+			if (!aceiteTermos) {
+				toast({
+					variant: "destructive",
+					title: "Erro",
+					description: "Você precisa aceitar os termos para enviar o processo.",
+				});
+				return;
+			}
+
+			// Simulação de envio
 			toast({
-				variant: "destructive",
-				title: "Erro",
-				description: "Você precisa aceitar os termos para enviar o processo.",
+				title: "Processo enviado com sucesso!",
+				description: "Obrigado por contribuir com a comunidade.",
 			});
-			return;
-		}
 
-		// Simulação de envio
-		toast({
-			title: "Processo enviado com sucesso!",
-			description: "Obrigado por contribuir com a comunidade.",
-		});
-
-		setTimeout(() => {
-			navigate({ to: "/" });
-		}, 1500);
-	};
+			setTimeout(() => {
+				navigate({ to: "/" });
+			}, 1500);
+		},
+	});
 
 	return (
 		<div className="container mx-auto px-4 py-8 max-w-2xl">
@@ -105,98 +119,184 @@ function Submission() {
 					<CardTitle>Dados do Processo</CardTitle>
 				</CardHeader>
 				<CardContent>
-					<form onSubmit={handleSubmit} className="space-y-6">
+					<form
+						onSubmit={(e) => {
+							e.preventDefault();
+							e.stopPropagation();
+							form.handleSubmit();
+						}}
+						className="space-y-6"
+					>
 						<div className="space-y-2">
-							<Label htmlFor="tipoProcesso">Tipo de Processo *</Label>
-							<Select
-								value={formData.tipoProcesso}
-								onValueChange={(value) =>
-									setFormData({
-										...formData,
-										tipoProcesso: value as ProcessTypeEnum,
-									})
-								}
-								required
-							>
-								<SelectTrigger>
-									<SelectValue placeholder="Selecione o tipo" />
-								</SelectTrigger>
-								<SelectContent>
-									{processTypeOptions.map((tipo) => (
-										<SelectItem key={tipo.value} value={tipo.value}>
-											{tipo.label}
-										</SelectItem>
-									))}
-								</SelectContent>
-							</Select>
+							<form.Field
+								name="processType"
+								validators={{
+									onChange: ({ value }) =>
+										!value ? "O tipo de processo é obrigatório" : undefined,
+									onChangeAsyncDebounceMs: 500,
+								}}
+								children={(field) => {
+									// Avoid hasty abstractions. Render props are great!
+									return (
+										<>
+											<Label htmlFor={field.name}>Tipo de Processo *</Label>
+											<Select
+												name={field.name}
+												value={field.state.value}
+												onValueChange={(value) =>
+													field.handleChange(value as ProcessTypeEnum)
+												}
+											>
+												<SelectTrigger>
+													<SelectValue placeholder="Selecione o tipo" />
+												</SelectTrigger>
+												<SelectContent>
+													{processTypeOptions.map((tipo) => (
+														<SelectItem key={tipo.value} value={tipo.value}>
+															{tipo.label}
+														</SelectItem>
+													))}
+												</SelectContent>
+											</Select>
+											<FieldInfo field={field} />
+										</>
+									);
+								}}
+							/>
 						</div>
 
 						<div className="space-y-2">
-							<Label htmlFor="om">OM da Polícia Federal *</Label>
-							<Input
-								type="text"
-								value={formData.om}
-								onChange={(e) =>
-									setFormData({ ...formData, om: e.target.value })
-								}
-								required
+							<form.Field
+								name="om"
+								validators={{
+									onChange: ({ value }) =>
+										!value
+											? "A OM é obrigatória"
+											: value.length < 3
+												? "A OM deve ter ao menos 3 caracteres"
+												: undefined,
+									onChangeAsyncDebounceMs: 500,
+								}}
+								children={(field) => {
+									// Avoid hasty abstractions. Render props are great!
+									return (
+										<>
+											<Label htmlFor={field.name}>
+												OM da Polícia Federal *
+											</Label>
+											<Input
+												id={field.name}
+												name={field.name}
+												type="text"
+												value={field.state.value}
+												onBlur={field.handleBlur}
+												onChange={(e) => field.handleChange(e.target.value)}
+											/>
+											<FieldInfo field={field} />
+										</>
+									);
+								}}
 							/>
 						</div>
 
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 							<div className="space-y-2">
-								<Label htmlFor="dataProtocolo">Data do Protocolo *</Label>
-								<Input
-									type="date"
-									value={formData.dataProtocolo}
-									onChange={(e) =>
-										setFormData({ ...formData, dataProtocolo: e.target.value })
-									}
-									required
+								<form.Field
+									name="dateProtocol"
+									validators={{
+										onChange: ({ value }) =>
+											!value ? "A data do procolo é obrigatória" : undefined,
+										onChangeAsyncDebounceMs: 500,
+									}}
+									children={(field) => {
+										// Avoid hasty abstractions. Render props are great!
+										return (
+											<>
+												<Label htmlFor={field.name}>Data do Protocolo *</Label>
+												<Input
+													id={field.name}
+													name={field.name}
+													type="date"
+													value={field.state.value}
+													onBlur={field.handleBlur}
+													onChange={(e) => field.handleChange(e.target.value)}
+												/>
+												<FieldInfo field={field} />
+											</>
+										);
+									}}
 								/>
 							</div>
 
 							<div className="space-y-2">
-								<Label htmlFor="dataDeferimento">
-									Data do Deferimento/Indeferimento *
-								</Label>
-								<Input
-									type="date"
-									value={formData.dataDeferimento}
-									onChange={(e) =>
-										setFormData({
-											...formData,
-											dataDeferimento: e.target.value,
-										})
-									}
-									required
+								<form.Field
+									name="dateDecision"
+									validators={{
+										onChange: ({ value }) =>
+											!value
+												? "A data do deferimento é obrigatória"
+												: undefined,
+										onChangeAsyncDebounceMs: 500,
+									}}
+									children={(field) => {
+										return (
+											<>
+												<Label htmlFor={field.name}>
+													Data do Deferimento/Indeferimento *
+												</Label>
+												<Input
+													id={field.name}
+													name={field.name}
+													type="date"
+													value={field.state.value}
+													onBlur={field.handleBlur}
+													onChange={(e) => field.handleChange(e.target.value)}
+												/>
+												<FieldInfo field={field} />
+											</>
+										);
+									}}
 								/>
 							</div>
 						</div>
 
 						<div className="space-y-2">
-							<Label htmlFor="resultado">Resultado *</Label>
-							<Select
-								value={formData.resultado}
-								onValueChange={(value) =>
-									setFormData({
-										...formData,
-										resultado: value as ProcessResultEnum,
-									})
-								}
-								required
-							>
-								<SelectTrigger>
-									<SelectValue placeholder="Selecione o resultado" />
-								</SelectTrigger>
-								<SelectContent>
-									{processResultOptions.map((resultado) => (
-										<SelectItem key={resultado.value} value={resultado.value}>
-											{resultado.label}
-										</SelectItem>
-									))}
-								</SelectContent>
-							</Select>
+							<form.Field
+								name="result"
+								validators={{
+									onChange: ({ value }) =>
+										!value ? "O resultado é obrigatório" : undefined,
+								}}
+								children={(field) => {
+									return (
+										<>
+											<Label htmlFor={field.name}>Resultado *</Label>
+											<Select
+												name={field.name}
+												value={field.state.value}
+												onValueChange={(value) =>
+													field.handleChange(value as ProcessResultEnum)
+												}
+											>
+												<SelectTrigger>
+													<SelectValue placeholder="Selecione o resultado" />
+												</SelectTrigger>
+												<SelectContent>
+													{processResultOptions.map((resultado) => (
+														<SelectItem
+															key={resultado.value}
+															value={resultado.value}
+														>
+															{resultado.label}
+														</SelectItem>
+													))}
+												</SelectContent>
+											</Select>
+											<FieldInfo field={field} />
+										</>
+									);
+								}}
+							/>
 						</div>
 
 						<div className="flex items-start space-x-2 p-4 bg-muted rounded-lg">
