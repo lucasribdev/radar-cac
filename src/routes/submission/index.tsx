@@ -1,6 +1,7 @@
 /** biome-ignore-all lint/correctness/noChildrenProp: <usamos a prop children no tanstack form> */
 import type { AnyFieldApi } from "@tanstack/react-form";
 import { useForm } from "@tanstack/react-form";
+import { useMutation } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Send } from "lucide-react";
 import { useState } from "react";
@@ -17,6 +18,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { supabaseClient } from "@/lib/supabaseClient";
 import {
 	PROCESS_RESULT_ENUM,
 	PROCESS_TYPE_ENUM,
@@ -56,6 +58,22 @@ type FormData = {
 	result: ProcessResultEnum | "";
 };
 
+type SubmissionPayload = {
+	process_type: ProcessTypeEnum;
+	om_name: string;
+	result: ProcessResultEnum;
+	date_protocol: string;
+	date_decision: string;
+};
+
+async function insertSubmission(payload: SubmissionPayload) {
+	const { error } = await supabaseClient.from("submissions").insert(payload);
+
+	if (error) {
+		throw error;
+	}
+}
+
 function FieldInfo({ field }: { field: AnyFieldApi }) {
 	return (
 		<>
@@ -71,18 +89,21 @@ function Submission() {
 	const navigate = useNavigate();
 	const { toast } = useToast();
 	const [aceiteTermos, setAceiteTermos] = useState(false);
+	const { mutateAsync: submitProcess, isPending } = useMutation({
+		mutationFn: insertSubmission,
+	});
+
+	const defaultValues: FormData = {
+		processType: "",
+		om: "",
+		dateProtocol: "",
+		dateDecision: "",
+		result: "",
+	};
 
 	const form = useForm({
-		defaultValues: {
-			processType: "",
-			om: "",
-			dateProtocol: "",
-			dateDecision: "",
-			result: "",
-		} as FormData,
+		defaultValues,
 		onSubmit: async ({ value }) => {
-			console.log(value);
-
 			if (!aceiteTermos) {
 				toast({
 					variant: "destructive",
@@ -92,15 +113,41 @@ function Submission() {
 				return;
 			}
 
-			// Simulação de envio
-			toast({
-				title: "Processo enviado com sucesso!",
-				description: "Obrigado por contribuir com a comunidade.",
-			});
+			if (!value.processType || !value.result) {
+				toast({
+					variant: "destructive",
+					title: "Erro",
+					description: "Preencha todos os campos obrigatórios antes de enviar.",
+				});
+				return;
+			}
 
-			setTimeout(() => {
+			const payload: SubmissionPayload = {
+				process_type: value.processType,
+				om_name: value.om,
+				result: value.result,
+				date_protocol: value.dateProtocol,
+				date_decision: value.dateDecision,
+			};
+
+			try {
+				await submitProcess(payload);
+				toast({
+					title: "Processo enviado com sucesso!",
+					description: "Obrigado por contribuir com a comunidade.",
+				});
 				navigate({ to: "/" });
-			}, 1500);
+			} catch (error) {
+				console.error(error);
+				toast({
+					variant: "destructive",
+					title: "Erro ao enviar processo",
+					description:
+						error instanceof Error
+							? error.message
+							: "Não foi possível salvar no momento.",
+				});
+			}
 		},
 	});
 
@@ -136,7 +183,6 @@ function Submission() {
 									onChangeAsyncDebounceMs: 500,
 								}}
 								children={(field) => {
-									// Avoid hasty abstractions. Render props are great!
 									return (
 										<>
 											<Label htmlFor={field.name}>Tipo de Processo *</Label>
@@ -144,10 +190,10 @@ function Submission() {
 												name={field.name}
 												value={field.state.value}
 												onValueChange={(value) =>
-													field.handleChange(value as ProcessTypeEnum)
+													field.handleChange(value as FormData["processType"])
 												}
 											>
-												<SelectTrigger>
+												<SelectTrigger className="w-full">
 													<SelectValue placeholder="Selecione o tipo" />
 												</SelectTrigger>
 												<SelectContent>
@@ -178,7 +224,6 @@ function Submission() {
 									onChangeAsyncDebounceMs: 500,
 								}}
 								children={(field) => {
-									// Avoid hasty abstractions. Render props are great!
 									return (
 										<>
 											<Label htmlFor={field.name}>
@@ -209,7 +254,6 @@ function Submission() {
 										onChangeAsyncDebounceMs: 500,
 									}}
 									children={(field) => {
-										// Avoid hasty abstractions. Render props are great!
 										return (
 											<>
 												<Label htmlFor={field.name}>Data do Protocolo *</Label>
@@ -275,10 +319,10 @@ function Submission() {
 												name={field.name}
 												value={field.state.value}
 												onValueChange={(value) =>
-													field.handleChange(value as ProcessResultEnum)
+													field.handleChange(value as FormData["result"])
 												}
 											>
-												<SelectTrigger>
+												<SelectTrigger className="w-full">
 													<SelectValue placeholder="Selecione o resultado" />
 												</SelectTrigger>
 												<SelectContent>
@@ -316,9 +360,14 @@ function Submission() {
 							</label>
 						</div>
 
-						<Button type="submit" className="w-full" size="lg">
-							<Send className="mr-2 h-4 w-4" />
-							Enviar Processo
+						<Button
+							type="submit"
+							className="w-full"
+							size="lg"
+							disabled={isPending}
+						>
+							{!isPending ? <Send className="mr-2 h-4 w-4" /> : null}
+							{isPending ? "Enviando..." : "Enviar Processo"}
 						</Button>
 					</form>
 				</CardContent>

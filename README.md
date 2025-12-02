@@ -40,7 +40,6 @@ Tabela `public.submissions` usada pelo app:
 - `result` (`public.process_result_enum`, not null)
 - `date_protocol` (`date`, not null)
 - `date_decision` (`date`, not null)
-- `days_diff` (`integer`, not null)
 
 Enums esperados:
 
