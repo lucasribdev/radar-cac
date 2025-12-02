@@ -3,6 +3,7 @@ import type { QueryClient } from "@tanstack/react-query";
 import {
 	createRootRouteWithContext,
 	HeadContent,
+	Link,
 	Scripts,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
@@ -37,6 +38,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 	}),
 
 	shellComponent: RootDocument,
+	notFoundComponent: NotFound,
 });
 
 function RootDocument({ children }: { children: React.ReactNode }) {
@@ -63,5 +65,32 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 				<Scripts />
 			</body>
 		</html>
+	);
+}
+
+function NotFound() {
+	return (
+		<div className="mx-auto flex max-w-3xl flex-col gap-3 px-6 py-10">
+			<div>
+				<p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+					Erro 404
+				</p>
+				<h1 className="text-3xl font-semibold text-slate-900">
+					Página não encontrada
+				</h1>
+			</div>
+			<p className="text-slate-600">
+				A rota acessada não existe ou foi movida. Volte para a página inicial ou
+				verifique o endereço digitado.
+			</p>
+			<div>
+				<Link
+					to="/"
+					className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900"
+				>
+					<span>Ir para o início</span>
+				</Link>
+			</div>
+		</div>
 	);
 }
