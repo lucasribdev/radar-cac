@@ -35,26 +35,31 @@ Tabela `public.submissions` usada pelo app:
 
 - `id` (`uuid`, PK, default `gen_random_uuid()`)
 - `created_at` (`timestamptz`, default `now()`)
-- `process_type` (`public.process`, not null)
+- `process_type` (`public.process_type_enum`, not null)
 - `om_name` (`text`, not null)
-- `result` (`public.result`, not null)
+- `result` (`public.process_result_enum`, not null)
 - `date_protocol` (`date`, not null)
 - `date_decision` (`date`, not null)
 - `days_diff` (`integer`, not null)
 
-DDL recomendada (ajuste os valores dos enums `public.process` e `public.result` conforme sua regra de negócio):
+Enums esperados:
+
+- `public.process_result_enum`: `DEFERIDO`, `INDEFERIDO`
+- `public.process_type_enum`: `CR`, `AUTORIZACAO_COMPRA`, `CRAF`, `GUIA_TRAFEGO`
+
+DDL recomendada:
 
 ```sql
--- Certifique-se de que os tipos enum existem (edite os valores conforme necessário)
-create type if not exists public.process as enum ('example_process');
-create type if not exists public.result as enum ('example_result');
+-- Certifique-se de que os tipos enum existem
+create type if not exists public.process_result_enum as enum ('DEFERIDO', 'INDEFERIDO');
+create type if not exists public.process_type_enum as enum ('CR', 'AUTORIZACAO_COMPRA', 'CRAF', 'GUIA_TRAFEGO');
 
 create table if not exists public.submissions (
   id uuid not null default gen_random_uuid(),
   created_at timestamp with time zone not null default now(),
-  process_type public.process not null,
+  process_type public.process_type_enum not null,
   om_name text not null,
-  result public.result not null,
+  result public.process_result_enum not null,
   date_protocol date not null,
   date_decision date not null,
   days_diff integer not null,
