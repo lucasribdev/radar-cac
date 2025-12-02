@@ -7,6 +7,7 @@ import {
 	Scripts,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
+import { Toaster } from "sonner";
 import Header from "../components/Header";
 import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
 import appCss from "../styles.css?url";
@@ -49,7 +50,8 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 			</head>
 			<body suppressHydrationWarning>
 				<Header />
-				{children}
+				<main className="min-h-screen">{children}</main>
+				<Toaster />
 				<TanStackDevtools
 					config={{
 						position: "bottom-right",
