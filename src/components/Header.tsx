@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Home, Menu, X } from "lucide-react";
+import { History, Home, Menu, Send, X } from "lucide-react";
 import { useState } from "react";
 
 export default function Header() {
@@ -50,6 +50,30 @@ export default function Header() {
 					>
 						<Home size={20} />
 						<span className="font-medium">Dashboard</span>
+					</Link>
+					<Link
+						to="/submission"
+						onClick={() => setIsOpen(false)}
+						className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800 transition-colors mb-2"
+						activeProps={{
+							className:
+								"flex items-center gap-3 p-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 transition-colors mb-2",
+						}}
+					>
+						<Send size={20} />
+						<span className="font-medium">Enviar Processo</span>
+					</Link>
+					<Link
+						to="/recents"
+						onClick={() => setIsOpen(false)}
+						className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800 transition-colors mb-2"
+						activeProps={{
+							className:
+								"flex items-center gap-3 p-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 transition-colors mb-2",
+						}}
+					>
+						<History size={20} />
+						<span className="font-medium">Recentes</span>
 					</Link>
 				</nav>
 			</aside>

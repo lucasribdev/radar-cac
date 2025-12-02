@@ -10,33 +10,53 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SubmissionIndexRouteImport } from './routes/submission/index'
+import { Route as RecentsIndexRouteImport } from './routes/recents/index'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SubmissionIndexRoute = SubmissionIndexRouteImport.update({
+  id: '/submission/',
+  path: '/submission/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RecentsIndexRoute = RecentsIndexRouteImport.update({
+  id: '/recents/',
+  path: '/recents/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/recents': typeof RecentsIndexRoute
+  '/submission': typeof SubmissionIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/recents': typeof RecentsIndexRoute
+  '/submission': typeof SubmissionIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/recents/': typeof RecentsIndexRoute
+  '/submission/': typeof SubmissionIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/recents' | '/submission'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/recents' | '/submission'
+  id: '__root__' | '/' | '/recents/' | '/submission/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  RecentsIndexRoute: typeof RecentsIndexRoute
+  SubmissionIndexRoute: typeof SubmissionIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +68,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/submission/': {
+      id: '/submission/'
+      path: '/submission'
+      fullPath: '/submission'
+      preLoaderRoute: typeof SubmissionIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/recents/': {
+      id: '/recents/'
+      path: '/recents'
+      fullPath: '/recents'
+      preLoaderRoute: typeof RecentsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  RecentsIndexRoute: RecentsIndexRoute,
+  SubmissionIndexRoute: SubmissionIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
