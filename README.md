@@ -3,6 +3,7 @@
 Painel colaborativo que reúne, em uma base compartilhada, os prazos de tramitação de processos de Controle de Armas (CAC). Usuários enviam dados anonimizados e o dashboard consolida estatísticas para ajudar a comunidade a acompanhar tempos de análise por OM e tipo de processo.
 
 ## Fluxo do usuário
+
 - Envio: em `/submission`, a pessoa informa tipo de processo, OM da PF, datas de protocolo/decisão e resultado; aceita os termos e grava o envio no Supabase (`public.submissions`).
 - Consulta: em `/`, escolhe filtros (tipo de processo, OM e período). O app chama RPCs do Supabase para montar:
   - Cards com média/mín/max de dias e total de envios (RPC `get_submissions_stats`).
@@ -10,22 +11,28 @@ Painel colaborativo que reúne, em uma base compartilhada, os prazos de tramita�
   - Tabela com envios mais recentes (RPC `get_recent_submissions`), também disponível em `/recents`.
 
 ## Stack rápida
+
 React 19 + Vite + TanStack Router/Query/Form, Tailwind, Supabase, Vitest, Biome.
 
 ## Setup local
-1) Clone o repositório  
-`git clone <url-do-repo> && cd radar-cac`
-2) Instale dependências  
-`npm install`
-3) Crie `.env.local` na raiz com as variáveis do seu projeto Supabase:  
+
+1. Clone o repositório  
+   `git clone <url-do-repo> && cd radar-cac`
+2. Instale dependências  
+   `npm install`
+3. Crie `.env.local` na raiz com as variáveis do seu projeto Supabase:
+
 ```
 VITE_SUPABASE_URL=<sua-url-supabase>
 VITE_SUPABASE_ANON_KEY=<sua-anon-key>
+VITE_RECAPTCHA_SITE_KEY=<sua-recaptcha-key>
 ```
-4) Rode em modo dev (porta 3000 por padrão)  
-`npm run dev`
+
+4. Rode em modo dev (porta 3000 por padrão)  
+   `npm run dev`
 
 ### Qualidade e testes
+
 - Lint: `npm run lint`
 - Format: `npm run format`
 - Testes: `npm run test`
