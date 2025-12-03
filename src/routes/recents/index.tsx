@@ -27,7 +27,7 @@ type RecentSubmission = {
 	omName: string;
 	processType: ProcessTypeEnum;
 	result: string;
-	daysDiff: number | null;
+	avgDays: number | null;
 };
 
 async function fetchRecentSubmissions(): Promise<RecentSubmission[]> {
@@ -104,7 +104,7 @@ function Recents() {
 												submission.processType}
 										</TableCell>
 										<TableCell className="font-semibold">
-											{formatDays(submission.daysDiff)}
+											{formatDays(submission.avgDays)}
 										</TableCell>
 										<TableCell>
 											<Badge

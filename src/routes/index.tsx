@@ -93,7 +93,7 @@ type RecentSubmission = {
 	omName: string;
 	processType: ProcessTypeEnum;
 	result: string;
-	daysDiff: number | null;
+	avgDays: number | null;
 };
 
 const periodToDays: Record<PeriodoValue, number> = {
@@ -390,7 +390,7 @@ function App() {
 										{processTypeLabels[submission.processType] ??
 											submission.processType}
 									</TableCell>
-									<TableCell>{formatDays(submission.daysDiff)}</TableCell>
+									<TableCell>{formatDays(submission.avgDays)}</TableCell>
 									<TableCell>
 										<Badge
 											variant={

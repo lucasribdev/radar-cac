@@ -125,17 +125,36 @@ as $$
     select
       (date_trunc('month', current_date) - (i * interval '1 month'))::date as month_start
     from generate_series(0, 5) as i
+  ), translated as (
+    select
+      extract(month from m.month_start) as month_number,
+      avg((s.date_decision - s.date_protocol))::int as avg_days,
+      m.month_start
+    from months m
+    left join public.submissions s
+      on date_trunc('month', s.date_decision) = m.month_start
+      and (p_om_name is null or s.om_name = p_om_name)
+      and (p_process_type is null or s.process_type = p_process_type)
+    group by m.month_start
   )
   select
-    to_char(m.month_start, 'Mon') as "month",
-    avg((s.date_decision - s.date_protocol))::int as "avgDays"
-  from months m
-  left join public.submissions s
-    on date_trunc('month', s.date_decision) = m.month_start
-    and (p_om_name is null or s.om_name = p_om_name)
-    and (p_process_type is null or s.process_type = p_process_type)
-  group by m.month_start
-  order by m.month_start;
+    case month_number
+      when 1 then 'Jan'
+      when 2 then 'Fev'
+      when 3 then 'Mar'
+      when 4 then 'Abr'
+      when 5 then 'Mai'
+      when 6 then 'Jun'
+      when 7 then 'Jul'
+      when 8 then 'Ago'
+      when 9 then 'Set'
+      when 10 then 'Out'
+      when 11 then 'Nov'
+      when 12 then 'Dez'
+    end as "month",
+    avg_days as "avgDays"
+  from translated
+  order by month_start;
 $$;
 ```
 
@@ -152,7 +171,7 @@ create or replace function public.get_recent_submissions(
 returns table (
   "omName" text,
   "processType" public.process_type_enum,
-  "daysDiff" integer,
+  "avgDays" integer,
   "result" public.process_result_enum,
   "createdAt" timestamp with time zone
 )
@@ -161,7 +180,7 @@ as $$
   select
     s.om_name as "omName",
     s.process_type as "processType",
-    (s.date_decision - s.date_protocol)::int as "daysDiff",
+    (s.date_decision - s.date_protocol)::int as "avgDays",
     s.result as "result",
     s.created_at as "createdAt"
   from public.submissions s
