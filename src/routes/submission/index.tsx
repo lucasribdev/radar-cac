@@ -47,8 +47,17 @@ type SubmissionPayload = {
 	date_decision: string;
 };
 
-async function insertSubmission(payload: SubmissionPayload) {
-	const { error } = await supabaseClient.from("submissions").insert(payload);
+type SubmissionRequest = SubmissionPayload & {
+	captchaToken: string;
+};
+
+async function submitViaEdgeFunction(payload: SubmissionRequest) {
+	const { error } = await supabaseClient.functions.invoke(
+		"submit-submission",
+		{
+			body: payload,
+		},
+	);
 
 	if (error) {
 		throw error;
@@ -82,7 +91,7 @@ function Submission() {
 	const navigate = useNavigate();
 	const { toast } = useToast();
 	const { mutateAsync: submitProcess, isPending } = useMutation({
-		mutationFn: insertSubmission,
+		mutationFn: submitViaEdgeFunction,
 	});
 
 	const defaultValues: FormData = {
@@ -176,7 +185,10 @@ function Submission() {
 			};
 
 			try {
-				await submitProcess(payload);
+				await submitProcess({
+					...payload,
+					captchaToken,
+				});
 				toast({
 					title: "Processo enviado com sucesso!",
 					description: "Obrigado por contribuir com a comunidade.",
