@@ -10,6 +10,7 @@ import {
 } from "recharts";
 import { fetchMonthlyStats } from "@/services/submissions";
 import type { ProcessTypeEnum } from "@/types/enums";
+import { ChartSkeleton, EmptyState, ErrorState } from "./LoadingStates";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 
 interface EvolutionChartProps {
@@ -18,10 +19,38 @@ interface EvolutionChartProps {
 }
 
 export const EvolutionChart = ({ processType, om }: EvolutionChartProps) => {
-	const { data: chartData = [] } = useQuery({
+	const {
+		data: chartData = [],
+		isFetching: isLoadingEvolution,
+		error: chartError,
+		refetch: refetchChart,
+	} = useQuery({
 		queryKey: ["submissions-monthly-stats", processType, om],
 		queryFn: () => fetchMonthlyStats({ processType, om }),
 	});
+
+	if (isLoadingEvolution) {
+		return <ChartSkeleton />;
+	}
+
+	if (chartError) {
+		return (
+			<ErrorState
+				message="Não foi possível carregar a evolução mensal."
+				onRetry={() => refetchChart()}
+			/>
+		);
+	}
+
+	if (!chartData?.length) {
+		return (
+			<EmptyState
+				title="Sem dados para exibir"
+				description="Nenhum ponto foi encontrado para os filtros selecionados."
+			/>
+		);
+	}
+
 	return (
 		<Card>
 			<CardHeader>

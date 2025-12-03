@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { EvolutionChart } from "@/components/EvolutionChart";
+import { FiltersSkeleton, ErrorState } from "@/components/LoadingStates";
 import { ProcessStats } from "@/components/ProcessStats";
 import { RecentsTable } from "@/components/RecentsTable";
 import { Card, CardContent } from "@/components/ui/card";
@@ -42,6 +43,7 @@ function App() {
 		data: omsPoliciaFederal = [],
 		isFetching: isLoadingOms,
 		error: omsError,
+		refetch: refetchOms,
 	} = useQuery({
 		queryKey: ["oms-policia-federal"],
 		queryFn: fetchOms,
@@ -57,78 +59,83 @@ function App() {
 			</div>
 
 			{/* Filtros */}
-			<Card>
-				<CardContent className="pt-6">
-					<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-						<div className="space-y-2">
-							<Label className="text-sm font-medium text-foreground">
-								Tipo de Processo
-							</Label>
-							<Select
-								value={processType}
-								onValueChange={(value) =>
-									setProcessType(value as ProcessTypeValue)
-								}
-							>
-								<SelectTrigger className="w-full">
-									<SelectValue />
-								</SelectTrigger>
-								<SelectContent>
-									{processTypeOptions.map((tipo) => (
-										<SelectItem key={tipo.value} value={tipo.value}>
-											{tipo.label}
-										</SelectItem>
-									))}
-								</SelectContent>
-							</Select>
-						</div>
+			{isLoadingOms ? (
+				<FiltersSkeleton />
+			) : omsError ? (
+				<ErrorState
+					message="Não foi possível carregar as OMs da Polícia Federal."
+					onRetry={() => refetchOms()}
+				/>
+			) : (
+				<Card>
+					<CardContent className="pt-6">
+						<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+							<div className="space-y-2">
+								<Label className="text-sm font-medium text-foreground">
+									Tipo de Processo
+								</Label>
+								<Select
+									value={processType}
+									onValueChange={(value) =>
+										setProcessType(value as ProcessTypeValue)
+									}
+								>
+									<SelectTrigger className="w-full">
+										<SelectValue />
+									</SelectTrigger>
+									<SelectContent>
+										{processTypeOptions.map((tipo) => (
+											<SelectItem key={tipo.value} value={tipo.value}>
+												{tipo.label}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+							</div>
 
-						<div className="space-y-2">
-							<Label className="text-sm font-medium text-foreground">
-								OM da Polícia Federal
-							</Label>
-							<Select
-								value={om}
-								disabled={isLoadingOms || !!omsError}
-								onValueChange={setOm}
-							>
-								<SelectTrigger className="w-full">
-									<SelectValue placeholder="Selecione a OM" />
-								</SelectTrigger>
-								<SelectContent>
-									<SelectItem value="Todas">Todas</SelectItem>
-									{omsPoliciaFederal.map((sigla) => (
-										<SelectItem key={sigla} value={sigla}>
-											{sigla}
-										</SelectItem>
-									))}
-								</SelectContent>
-							</Select>
-						</div>
+							<div className="space-y-2">
+								<Label className="text-sm font-medium text-foreground">
+									OM da Polícia Federal
+								</Label>
+								<Select value={om} onValueChange={setOm}>
+									<SelectTrigger className="w-full">
+										<SelectValue placeholder="Selecione a OM" />
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem value="Todas">Todas</SelectItem>
+										{omsPoliciaFederal.map((sigla) => (
+											<SelectItem key={sigla} value={sigla}>
+												{sigla}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+							</div>
 
-						<div className="space-y-2">
-							<Label className="text-sm font-medium text-foreground">
-								Período
-							</Label>
-							<Select
-								value={period}
-								onValueChange={(value) => setPeriod(value as PeriodValue)}
-							>
-								<SelectTrigger className="w-full">
-									<SelectValue />
-								</SelectTrigger>
-								<SelectContent>
-									{periodOptions.map((per) => (
-										<SelectItem key={per.value} value={per.value}>
-											{per.label}
-										</SelectItem>
-									))}
-								</SelectContent>
-							</Select>
+							<div className="space-y-2">
+								<Label className="text-sm font-medium text-foreground">
+									Período
+								</Label>
+								<Select
+									value={period}
+									onValueChange={(value) => setPeriod(value as PeriodValue)}
+								>
+									<SelectTrigger className="w-full">
+										<SelectValue />
+									</SelectTrigger>
+									<SelectContent>
+										{periodOptions.map((per) => (
+											<SelectItem key={per.value} value={per.value}>
+												{per.label}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+							</div>
 						</div>
-					</div>
-				</CardContent>
-			</Card>
+					</CardContent>
+				</Card>
+			)}
 
 			{/* Cards de Estatísticas */}
 			<ProcessStats processType={processType} om={om} period={period} />

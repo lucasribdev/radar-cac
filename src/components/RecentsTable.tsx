@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { formatDays } from "@/lib/format";
 import { fetchRecentSubmissions } from "@/services/submissions";
 import { getProcessTypeLabel, type ProcessTypeEnum } from "@/types/enums";
+import { EmptyState, ErrorState, TableSkeleton } from "./LoadingStates";
 import { Badge } from "./ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import {
@@ -19,10 +20,37 @@ interface RecentsTableProps {
 }
 
 export const RecentsTable = ({ processType, om }: RecentsTableProps) => {
-	const { data: recentSubmissions = [] } = useQuery({
+	const {
+		data: recentSubmissions = [],
+		isFetching: isLoadingRecents,
+		error: recentsError,
+		refetch: refetchRecents,
+	} = useQuery({
 		queryKey: ["recent-submissions", processType, om],
 		queryFn: () => fetchRecentSubmissions({ processType, om }),
 	});
+
+	if (isLoadingRecents) {
+		return <TableSkeleton rows={6} />;
+	}
+
+	if (recentsError) {
+		return (
+			<ErrorState
+				message="Não foi possível carregar os envios recentes."
+				onRetry={() => refetchRecents()}
+			/>
+		);
+	}
+
+	if (!recentSubmissions.length) {
+		return (
+			<EmptyState
+				title="Sem envios recentes"
+				description="Nenhum envio foi encontrado para os filtros selecionados."
+			/>
+		);
+	}
 
 	return (
 		<Card>
