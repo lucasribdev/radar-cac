@@ -30,24 +30,20 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
-import { supabaseClient } from "@/lib/supabaseClient";
-import { PROCESS_TYPE_ENUM, type ProcessTypeEnum } from "@/types/enums";
+import { formatDays, formatNumber } from "@/lib/format";
+import {
+	fetchMonthlyStats,
+	fetchOms,
+	fetchRecentSubmissions,
+	fetchSubmissionStats,
+} from "@/services/submissions";
+import { PROCESS_TYPE_OPTIONS, getProcessTypeLabel } from "@/types/enums";
 
 export const Route = createFileRoute("/")({ component: App });
 
-const processTypeLabels: Record<ProcessTypeEnum, string> = {
-	CR: "CR",
-	AUTORIZACAO_COMPRA: "Autorização de Compra",
-	CRAF: "CRAF",
-	GUIA_TRAFEGO: "Guia de Tráfego",
-};
-
 const tiposProcesso = [
 	{ value: "Todos", label: "Todos" },
-	...PROCESS_TYPE_ENUM.map((value) => ({
-		value,
-		label: processTypeLabels[value],
-	})),
+	...PROCESS_TYPE_OPTIONS,
 ] as const;
 
 type TipoProcessoValue = (typeof tiposProcesso)[number]["value"];
@@ -61,130 +57,12 @@ const periodos = [
 
 type PeriodoValue = (typeof periodos)[number]["value"];
 
-async function fetchOms() {
-	const { data, error } = await supabaseClient
-		.from("submissions")
-		.select("om_name", { count: "exact" })
-		.order("om_name", { ascending: true });
-
-	if (error) {
-		throw error;
-	}
-
-	const uniqueOms = Array.from(
-		new Set((data ?? []).map((item) => item.om_name)),
-	);
-	uniqueOms.sort((a, b) => a.localeCompare(b));
-	return uniqueOms;
-}
-
-type AggregatedStats = {
-	total: number;
-	avgDays: number | null;
-	minDays: number | null;
-	maxDays: number | null;
-};
-
-type MonthlyStat = {
-	month: string;
-	avgDays: number | null;
-};
-
-type RecentSubmission = {
-	id: string;
-	omName: string;
-	processType: ProcessTypeEnum;
-	result: string;
-	avgDays: number | null;
-};
-
 const periodToDays: Record<PeriodoValue, number> = {
 	"7d": 7,
 	"30d": 30,
 	"90d": 90,
 	"12m": 365,
 };
-
-async function fetchSubmissionStats({
-	processType,
-	om,
-	periodo,
-}: {
-	processType: TipoProcessoValue;
-	om: string;
-	periodo: PeriodoValue;
-}): Promise<AggregatedStats> {
-	const { data, error } = await supabaseClient.rpc("get_submissions_stats", {
-		p_om_name: om === "Todas" ? null : om,
-		p_period_to_days: periodToDays[periodo],
-		p_process_type: processType === "Todos" ? null : processType,
-	});
-
-	if (error) {
-		throw error;
-	}
-
-	const stats = data?.[0];
-	return {
-		total: stats?.total ?? 0,
-		avgDays: stats?.avgDays ?? null,
-		minDays: stats?.minDays ?? null,
-		maxDays: stats?.maxDays ?? null,
-	};
-}
-
-async function fetchMonthlyStats({
-	processType,
-	om,
-}: {
-	processType: TipoProcessoValue;
-	om: string;
-}): Promise<MonthlyStat[]> {
-	const { data, error } = await supabaseClient.rpc(
-		"get_submissions_monthly_stats",
-		{
-			p_om_name: om === "Todas" ? null : om,
-			p_process_type: processType === "Todos" ? null : processType,
-		},
-	);
-
-	if (error) {
-		throw error;
-	}
-
-	return data ?? [];
-}
-
-async function fetchRecentSubmissions({
-	processType,
-	om,
-	limit = 6,
-}: {
-	processType: TipoProcessoValue;
-	om: string;
-	limit?: number;
-}): Promise<RecentSubmission[]> {
-	const { data, error } = await supabaseClient.rpc("get_recent_submissions", {
-		p_om_name: om === "Todas" ? null : om,
-		p_process_type: processType === "Todos" ? null : processType,
-		p_limit: limit,
-	});
-
-	if (error) {
-		throw error;
-	}
-
-	return (data ?? []) as RecentSubmission[];
-}
-
-function formatDays(value: number | null) {
-	if (value === null || Number.isNaN(value)) return "--";
-	return `${Math.round(value)} dias`;
-}
-
-function formatNumber(value: number) {
-	return value.toLocaleString("pt-BR");
-}
 
 function App() {
 	const [tipoProcesso, setTipoProcesso] = useState<TipoProcessoValue>("Todos");
@@ -206,11 +84,14 @@ function App() {
 			maxDays: null,
 		},
 		isFetching: isLoadingStats,
-		error: statsError,
 	} = useQuery({
 		queryKey: ["submissions-stats", tipoProcesso, om, periodo],
 		queryFn: () =>
-			fetchSubmissionStats({ processType: tipoProcesso, om, periodo }),
+			fetchSubmissionStats({
+				processType: tipoProcesso,
+				om,
+				days: periodToDays[periodo],
+			}),
 	});
 	const { data: monthlyStats = [] } = useQuery({
 		queryKey: ["submissions-monthly-stats", tipoProcesso, om],
@@ -388,8 +269,7 @@ function App() {
 										{submission.omName}
 									</TableCell>
 									<TableCell>
-										{processTypeLabels[submission.processType] ??
-											submission.processType}
+										{getProcessTypeLabel(submission.processType)}
 									</TableCell>
 									<TableCell>{formatDays(submission.avgDays)}</TableCell>
 									<TableCell>

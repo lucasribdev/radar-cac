@@ -10,57 +10,16 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
-import { supabaseClient } from "@/lib/supabaseClient";
-import type { ProcessTypeEnum } from "@/types/enums";
+import { formatDate, formatDays } from "@/lib/format";
+import { fetchRecentSubmissions } from "@/services/submissions";
+import { getProcessTypeLabel } from "@/types/enums";
 
 export const Route = createFileRoute("/recents/")({ component: Recents });
-
-const processTypeLabels: Record<ProcessTypeEnum, string> = {
-	CR: "CR",
-	AUTORIZACAO_COMPRA: "Autorização de Compra",
-	CRAF: "CRAF",
-	GUIA_TRAFEGO: "Guia de Tráfego",
-};
-
-type RecentSubmission = {
-	id: string;
-	createdAt: string;
-	omName: string;
-	processType: ProcessTypeEnum;
-	result: string;
-	avgDays: number | null;
-};
-
-async function fetchRecentSubmissions(): Promise<RecentSubmission[]> {
-	const { data, error } = await supabaseClient.rpc("get_recent_submissions", {
-		p_om_name: null,
-		p_process_type: null,
-		p_limit: 10,
-	});
-
-	if (error) {
-		throw error;
-	}
-
-	return (data ?? []) as RecentSubmission[];
-}
-
-function formatDays(value: number | null) {
-	if (value === null || Number.isNaN(value)) return "--";
-	return `${Math.round(value)} dias`;
-}
-
-function formatDate(value: string) {
-	if (!value) return "--";
-	const date = new Date(value);
-	if (Number.isNaN(date.getTime())) return value;
-	return date.toLocaleDateString("pt-BR");
-}
 
 function Recents() {
 	const { data: recentSubmissions = [] } = useQuery({
 		queryKey: ["recent-submissions-page"],
-		queryFn: fetchRecentSubmissions,
+		queryFn: () => fetchRecentSubmissions({ limit: 10 }),
 	});
 
 	return (
@@ -94,15 +53,14 @@ function Recents() {
 								{recentSubmissions.map((submission) => (
 									<TableRow key={submission.id}>
 										<TableCell className="text-muted-foreground">
-											{formatDate(submission.createdAt)}
+											{formatDate(submission.createdAt ?? "")}
 										</TableCell>
 										<TableCell className="font-medium">
-											{submission.omName}
-										</TableCell>
-										<TableCell>
-											{processTypeLabels[submission.processType] ??
-												submission.processType}
-										</TableCell>
+										{submission.omName}
+									</TableCell>
+									<TableCell>
+										{getProcessTypeLabel(submission.processType)}
+									</TableCell>
 										<TableCell className="font-semibold">
 											{formatDays(submission.avgDays)}
 										</TableCell>

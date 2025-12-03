@@ -1,7 +1,7 @@
 /** biome-ignore-all lint/correctness/noChildrenProp: <usamos a prop children no tanstack form> */
 import type { AnyFieldApi } from "@tanstack/react-form";
 import { useForm } from "@tanstack/react-form";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Send } from "lucide-react";
 import { useState } from "react";
@@ -19,37 +19,18 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabaseClient } from "@/lib/supabaseClient";
+import { fetchOms } from "@/services/submissions";
 import {
-	PROCESS_RESULT_ENUM,
-	PROCESS_TYPE_ENUM,
+	PROCESS_RESULT_OPTIONS,
+	PROCESS_TYPE_OPTIONS,
 	type ProcessResultEnum,
 	type ProcessTypeEnum,
 } from "@/types/enums";
 
 export const Route = createFileRoute("/submission/")({ component: Submission });
 
-const processTypeLabels: Record<ProcessTypeEnum, string> = {
-	CR: "CR",
-	AUTORIZACAO_COMPRA: "Autorização de Compra",
-	CRAF: "CRAF",
-	GUIA_TRAFEGO: "Guia de Tráfego",
-};
-
-const processResultLabels: Record<ProcessResultEnum, string> = {
-	DEFERIDO: "Deferido",
-	INDEFERIDO: "Indeferido",
-};
-
-const processTypeOptions = PROCESS_TYPE_ENUM.map((value) => ({
-	value,
-	label: processTypeLabels[value],
-}));
-
-const processResultOptions = PROCESS_RESULT_ENUM.map((value) => ({
-	value,
-	label: processResultLabels[value],
-}));
-
+const processTypeOptions = PROCESS_TYPE_OPTIONS;
+const processResultOptions = PROCESS_RESULT_OPTIONS;
 type FormData = {
 	processType: ProcessTypeEnum | "";
 	om: string;
@@ -65,8 +46,6 @@ type SubmissionPayload = {
 	date_protocol: string;
 	date_decision: string;
 };
-
-const omPattern = /^[\p{L}0-9 .-]+$/u;
 
 async function insertSubmission(payload: SubmissionPayload) {
 	const { error } = await supabaseClient.from("submissions").insert(payload);
@@ -104,6 +83,15 @@ function Submission() {
 	const { mutateAsync: submitProcess, isPending } = useMutation({
 		mutationFn: insertSubmission,
 	});
+	const {
+		data: omsPoliciaFederal = [],
+		isFetching: isLoadingOms,
+		error: omsError,
+	} = useQuery({
+		queryKey: ["oms-policia-federal"],
+		queryFn: fetchOms,
+	});
+	const [useCustomOm, setUseCustomOm] = useState(false);
 
 	const defaultValues: FormData = {
 		processType: "",
@@ -135,11 +123,7 @@ function Submission() {
 			}
 
 			const omNormalized = normalizeOm(value.om);
-			if (
-				!omNormalized ||
-				omNormalized.length < 3 ||
-				!omPattern.test(omNormalized)
-			) {
+			if (!omNormalized || omNormalized.length < 3) {
 				toast({
 					variant: "destructive",
 					title: "Erro",
@@ -280,9 +264,7 @@ function Submission() {
 											? "A OM é obrigatória"
 											: value.trim().length < 3
 												? "A OM deve ter ao menos 3 caracteres"
-												: !omPattern.test(value.trim().toUpperCase())
-													? "Use apenas letras, números, espaços ou .-"
-													: undefined,
+												: undefined,
 									onChangeAsyncDebounceMs: 500,
 								}}
 								children={(field) => {
@@ -291,16 +273,51 @@ function Submission() {
 											<Label htmlFor={field.name}>
 												OM da Polícia Federal *
 											</Label>
-											<Input
-												id={field.name}
-												name={field.name}
-												type="text"
-												value={field.state.value}
-												onBlur={field.handleBlur}
-												onChange={(e) =>
-													field.handleChange(e.target.value.toUpperCase())
-												}
-											/>
+											<Select
+												name={`${field.name}-select`}
+												value={useCustomOm ? "__custom__" : field.state.value}
+												disabled={isLoadingOms}
+												onValueChange={(value) => {
+													if (value === "__custom__") {
+														setUseCustomOm(true);
+														field.handleChange("");
+													} else {
+														setUseCustomOm(false);
+														field.handleChange(value);
+													}
+												}}
+											>
+												<SelectTrigger className="w-full">
+													<SelectValue placeholder="Selecione a OM" />
+												</SelectTrigger>
+												<SelectContent>
+													{(omsError ? [] : omsPoliciaFederal).map((sigla) => (
+														<SelectItem key={sigla} value={sigla}>
+															{sigla}
+														</SelectItem>
+													))}
+													<SelectItem value="__custom__">
+														Não encontrei minha OM
+													</SelectItem>
+												</SelectContent>
+											</Select>
+											{useCustomOm ? (
+												<div className="mt-2 space-y-2">
+													<Label htmlFor={field.name}>
+														Digite a OM (caso não esteja na lista)
+													</Label>
+													<Input
+														id={field.name}
+														name={field.name}
+														type="text"
+														value={field.state.value}
+														onBlur={field.handleBlur}
+														onChange={(e) =>
+															field.handleChange(e.target.value.toUpperCase())
+														}
+													/>
+												</div>
+											) : null}
 											<FieldInfo field={field} />
 										</>
 									);
