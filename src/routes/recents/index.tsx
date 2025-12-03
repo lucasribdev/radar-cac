@@ -23,6 +23,7 @@ const processTypeLabels: Record<ProcessTypeEnum, string> = {
 };
 
 type RecentSubmission = {
+	id: string;
 	createdAt: string;
 	omName: string;
 	processType: ProcessTypeEnum;
@@ -90,9 +91,8 @@ function Recents() {
 								</TableRow>
 							</TableHeader>
 							<TableBody>
-								{recentSubmissions.map((submission, index) => (
-									// biome-ignore lint/suspicious/noArrayIndexKey: <Nao tem id>
-									<TableRow key={submission.omName + index}>
+								{recentSubmissions.map((submission) => (
+									<TableRow key={submission.id}>
 										<TableCell className="text-muted-foreground">
 											{formatDate(submission.createdAt)}
 										</TableCell>

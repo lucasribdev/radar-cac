@@ -169,6 +169,7 @@ create or replace function public.get_recent_submissions(
   p_limit integer default 10
 )
 returns table (
+  "id" uuid,
   "omName" text,
   "processType" public.process_type_enum,
   "avgDays" integer,
@@ -178,6 +179,7 @@ returns table (
 language sql
 as $$
   select
+    s.id as "id",
     s.om_name as "omName",
     s.process_type as "processType",
     (s.date_decision - s.date_protocol)::int as "avgDays",

@@ -91,6 +91,7 @@ type MonthlyStat = {
 };
 
 type RecentSubmission = {
+	id: string;
 	omName: string;
 	processType: ProcessTypeEnum;
 	result: string;
@@ -381,9 +382,8 @@ function App() {
 							</TableRow>
 						</TableHeader>
 						<TableBody>
-							{recentSubmissions.map((submission, index) => (
-								// biome-ignore lint/suspicious/noArrayIndexKey: <nao tem id>
-								<TableRow key={submission.omName + index}>
+							{recentSubmissions.map((submission) => (
+								<TableRow key={submission.id}>
 									<TableCell className="font-medium">
 										{submission.omName}
 									</TableCell>

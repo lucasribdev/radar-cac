@@ -310,30 +310,25 @@ function Submission() {
 
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 							<div className="space-y-2">
-							<form.Field
-								name="dateProtocol"
-								validators={{
-									onChange: ({ value }) => {
-										const parsed = parseDate(value);
-										const today = new Date();
-										today.setHours(0, 0, 0, 0);
-										const decision = parseDate(
-											form.state.values.dateDecision,
-										);
+								<form.Field
+									name="dateProtocol"
+									validators={{
+										onChange: ({ value }) => {
+											const parsed = parseDate(value);
+											const today = new Date();
+											today.setHours(0, 0, 0, 0);
 
-										return !value
-											? "A data do protocolo é obrigatória"
-											: !parsed
-												? "Data inválida"
-												: parsed > today
-													? "Data futura não permitida"
-													: decision && decision > parsed
-														? "A decisão não pode ser maior que o protocolo"
+											return !value
+												? "A data do protocolo é obrigatória"
+												: !parsed
+													? "Data inválida"
+													: parsed > today
+														? "Data futura não permitida"
 														: undefined;
-									},
-									onChangeAsyncDebounceMs: 500,
-								}}
-								children={(field) => {
+										},
+										onChangeAsyncDebounceMs: 500,
+									}}
+									children={(field) => {
 										return (
 											<>
 												<Label htmlFor={field.name}>Data do Protocolo *</Label>
@@ -353,30 +348,25 @@ function Submission() {
 							</div>
 
 							<div className="space-y-2">
-							<form.Field
-								name="dateDecision"
-								validators={{
-									onChange: ({ value }) => {
-										const parsed = parseDate(value);
-										const today = new Date();
-										today.setHours(0, 0, 0, 0);
-										const protocol = parseDate(
-											form.state.values.dateProtocol,
-										);
+								<form.Field
+									name="dateDecision"
+									validators={{
+										onChange: ({ value }) => {
+											const parsed = parseDate(value);
+											const today = new Date();
+											today.setHours(0, 0, 0, 0);
 
-										return !value
-											? "A data do deferimento é obrigatória"
-											: !parsed
-												? "Data inválida"
-												: parsed > today
-													? "Data futura não permitida"
-													: protocol && parsed > protocol
-														? "A data de decisão não pode ser maior que a data de protocolo"
+											return !value
+												? "A data do deferimento é obrigatória"
+												: !parsed
+													? "Data inválida"
+													: parsed > today
+														? "Data futura não permitida"
 														: undefined;
-									},
-									onChangeAsyncDebounceMs: 500,
-								}}
-								children={(field) => {
+										},
+										onChangeAsyncDebounceMs: 500,
+									}}
+									children={(field) => {
 										return (
 											<>
 												<Label htmlFor={field.name}>
