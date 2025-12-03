@@ -1,8 +1,18 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Calendar, FileText, TrendingUp } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
+import {
+	CartesianGrid,
+	Line,
+	LineChart,
+	ResponsiveContainer,
+	Tooltip,
+	XAxis,
+	YAxis,
+} from "recharts";
 import { StatCard } from "@/components/StatCard";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import {
@@ -67,14 +77,6 @@ async function fetchOms() {
 	return uniqueOms;
 }
 
-type SubmissionStatsRow = {
-	process_type: ProcessTypeEnum;
-	total: number;
-	avg_days: number | null;
-	min_days: number | null;
-	max_days: number | null;
-};
-
 type AggregatedStats = {
 	total: number;
 	avgDays: number | null;
@@ -82,11 +84,16 @@ type AggregatedStats = {
 	maxDays: number | null;
 };
 
-type SubmissionRow = {
-	process_type: ProcessTypeEnum;
-	om_name: string;
-	date_protocol: string;
-	date_decision: string;
+type MonthlyStat = {
+	month: string;
+	avgDays: number | null;
+};
+
+type RecentSubmission = {
+	omName: string;
+	processType: ProcessTypeEnum;
+	result: string;
+	daysDiff: number | null;
 };
 
 const periodToDays: Record<PeriodoValue, number> = {
@@ -104,64 +111,68 @@ async function fetchSubmissionStats({
 	processType: TipoProcessoValue;
 	om: string;
 	periodo: PeriodoValue;
-}): Promise<SubmissionStatsRow[]> {
-	let query = supabaseClient
-		.from("submissions")
-		.select("process_type, om_name, date_protocol, date_decision");
+}): Promise<AggregatedStats> {
+	const { data, error } = await supabaseClient.rpc("get_submissions_stats", {
+		p_om_name: om === "Todas" ? null : om,
+		p_period_to_days: periodToDays[periodo],
+		p_process_type: processType === "Todos" ? null : processType,
+	});
 
-	if (processType !== "Todos") {
-		query = query.eq("process_type", processType);
-	}
-
-	if (om !== "Todas") {
-		query = query.eq("om_name", om);
-	}
-
-	const daysRange = periodToDays[periodo];
-	const fromDate = new Date();
-	fromDate.setDate(fromDate.getDate() - daysRange);
-	query = query.gte("date_protocol", fromDate.toISOString().slice(0, 10));
-
-	const { data, error } = await query.returns<SubmissionRow[]>();
 	if (error) {
 		throw error;
 	}
 
-	return computeStats(data ?? []);
+	const stats = data?.[0];
+	return {
+		total: stats?.total ?? 0,
+		avgDays: stats?.avgDays ?? null,
+		minDays: stats?.minDays ?? null,
+		maxDays: stats?.maxDays ?? null,
+	};
 }
 
-function aggregateStats(stats: SubmissionStatsRow[]): AggregatedStats {
-	if (stats.length === 0) {
-		return { total: 0, avgDays: null, minDays: null, maxDays: null };
+async function fetchMonthlyStats({
+	processType,
+	om,
+}: {
+	processType: TipoProcessoValue;
+	om: string;
+}): Promise<MonthlyStat[]> {
+	const { data, error } = await supabaseClient.rpc(
+		"get_submissions_monthly_stats",
+		{
+			p_om_name: om === "Todas" ? null : om,
+			p_process_type: processType === "Todos" ? null : processType,
+		},
+	);
+
+	if (error) {
+		throw error;
 	}
 
-	const total = stats.reduce((acc, curr) => acc + curr.total, 0);
-	const weightedAvg =
-		total === 0
-			? null
-			: stats.reduce((acc, curr) => {
-					if (curr.avg_days === null) return acc;
-					return acc + curr.avg_days * curr.total;
-				}, 0) / total;
+	return data ?? [];
+}
 
-	const minDays = stats.reduce<number | null>((acc, curr) => {
-		if (curr.min_days === null) return acc;
-		if (acc === null) return curr.min_days;
-		return Math.min(acc, curr.min_days);
-	}, null);
+async function fetchRecentSubmissions({
+	processType,
+	om,
+	limit = 6,
+}: {
+	processType: TipoProcessoValue;
+	om: string;
+	limit?: number;
+}): Promise<RecentSubmission[]> {
+	const { data, error } = await supabaseClient.rpc("get_recent_submissions", {
+		p_om_name: om === "Todas" ? null : om,
+		p_process_type: processType === "Todos" ? null : processType,
+		p_limit: limit,
+	});
 
-	const maxDays = stats.reduce<number | null>((acc, curr) => {
-		if (curr.max_days === null) return acc;
-		if (acc === null) return curr.max_days;
-		return Math.max(acc, curr.max_days);
-	}, null);
+	if (error) {
+		throw error;
+	}
 
-	return {
-		total,
-		avgDays: weightedAvg,
-		minDays,
-		maxDays,
-	};
+	return (data ?? []) as RecentSubmission[];
 }
 
 function formatDays(value: number | null) {
@@ -171,45 +182,6 @@ function formatDays(value: number | null) {
 
 function formatNumber(value: number) {
 	return value.toLocaleString("pt-BR");
-}
-
-function computeStats(rows: SubmissionRow[]): SubmissionStatsRow[] {
-	const grouped = new Map<
-		ProcessTypeEnum,
-		{ total: number; sum: number; min: number | null; max: number | null }
-	>();
-
-	for (const row of rows) {
-		const days = Math.round(
-			(new Date(row.date_decision).getTime() -
-				new Date(row.date_protocol).getTime()) /
-				(1000 * 60 * 60 * 24),
-		);
-
-		const current = grouped.get(row.process_type) ?? {
-			total: 0,
-			sum: 0,
-			min: null,
-			max: null,
-		};
-
-		current.total += 1;
-		if (!Number.isNaN(days)) {
-			current.sum += days;
-			current.min = current.min === null ? days : Math.min(current.min, days);
-			current.max = current.max === null ? days : Math.max(current.max, days);
-		}
-
-		grouped.set(row.process_type, current);
-	}
-
-	return Array.from(grouped.entries()).map(([process_type, data]) => ({
-		process_type,
-		total: data.total,
-		avg_days: data.total > 0 ? data.sum / data.total : null,
-		min_days: data.min,
-		max_days: data.max,
-	}));
 }
 
 function App() {
@@ -225,7 +197,12 @@ function App() {
 		queryFn: fetchOms,
 	});
 	const {
-		data: stats = [],
+		data: aggregatedStats = {
+			total: 0,
+			avgDays: null,
+			minDays: null,
+			maxDays: null,
+		},
 		isFetching: isLoadingStats,
 		error: statsError,
 	} = useQuery({
@@ -233,7 +210,19 @@ function App() {
 		queryFn: () =>
 			fetchSubmissionStats({ processType: tipoProcesso, om, periodo }),
 	});
-	const aggregatedStats = useMemo(() => aggregateStats(stats), [stats]);
+	const { data: monthlyStats = [] } = useQuery({
+		queryKey: ["submissions-monthly-stats", tipoProcesso, om],
+		queryFn: () => fetchMonthlyStats({ processType: tipoProcesso, om }),
+	});
+	const { data: recentSubmissions = [] } = useQuery({
+		queryKey: ["recent-submissions", tipoProcesso, om],
+		queryFn: () => fetchRecentSubmissions({ processType: tipoProcesso, om }),
+	});
+
+	const chartData = monthlyStats.map((row) => ({
+		mes: row.month,
+		dias: row.avgDays ?? 0,
+	}));
 
 	return (
 		<div className="container mx-auto px-4 py-8 space-y-8">
@@ -342,84 +331,17 @@ function App() {
 				/>
 			</div>
 
-			<Card>
-				<CardHeader>
-					<CardTitle>Resumo por Tipo de Processo</CardTitle>
-					<p className="text-sm text-muted-foreground">
-						{isLoadingStats
-							? "Carregando estatísticas..."
-							: statsError
-								? "Erro ao carregar estatísticas."
-								: "Média, menor e maior prazo por tipo no período selecionado."}
-					</p>
-				</CardHeader>
-				<CardContent>
-					<Table>
-						<TableHeader>
-							<TableRow>
-								<TableHead>Tipo</TableHead>
-								<TableHead>Total</TableHead>
-								<TableHead>Média</TableHead>
-								<TableHead>Mínimo</TableHead>
-								<TableHead>Máximo</TableHead>
-							</TableRow>
-						</TableHeader>
-						<TableBody>
-							{isLoadingStats ? (
-								<TableRow>
-									<TableCell colSpan={5} className="text-center">
-										Carregando...
-									</TableCell>
-								</TableRow>
-							) : statsError ? (
-								<TableRow>
-									<TableCell colSpan={5} className="text-center text-red-500">
-										Erro ao carregar estatísticas.
-									</TableCell>
-								</TableRow>
-							) : stats.length === 0 ? (
-								<TableRow>
-									<TableCell colSpan={5} className="text-center">
-										Nenhum dado disponível para o filtro.
-									</TableCell>
-								</TableRow>
-							) : (
-								stats.map((row) => (
-									<TableRow key={row.process_type}>
-										<TableCell className="font-medium">
-											{processTypeLabels[row.process_type]}
-										</TableCell>
-										<TableCell>{formatNumber(row.total)}</TableCell>
-										<TableCell>{formatDays(row.avg_days)}</TableCell>
-										<TableCell>{formatDays(row.min_days)}</TableCell>
-										<TableCell>{formatDays(row.max_days)}</TableCell>
-									</TableRow>
-								))
-							)}
-						</TableBody>
-					</Table>
-				</CardContent>
-			</Card>
-
 			{/* Gráfico */}
-			{/* <Card>
+			<Card>
 				<CardHeader>
 					<CardTitle>Evolução Mensal dos Prazos</CardTitle>
 				</CardHeader>
 				<CardContent>
 					<ResponsiveContainer width="100%" height={300}>
 						<LineChart data={chartData}>
-							<CartesianGrid
-								strokeDasharray="3 3"
-								stroke="hsl(var(--border))"
-							/>
-							<XAxis
-								dataKey="mes"
-								stroke="hsl(var(--muted-foreground))"
-								fontSize={12}
-							/>
+							<CartesianGrid strokeDasharray="3 3" />
+							<XAxis dataKey="mes" fontSize={12} />
 							<YAxis
-								stroke="hsl(var(--muted-foreground))"
 								fontSize={12}
 								label={{ value: "Dias", angle: -90, position: "insideLeft" }}
 							/>
@@ -433,7 +355,6 @@ function App() {
 							<Line
 								type="monotone"
 								dataKey="dias"
-								stroke="hsl(var(--primary))"
 								strokeWidth={3}
 								dot={{ fill: "hsl(var(--primary))", r: 4 }}
 								activeDot={{ r: 6 }}
@@ -441,10 +362,10 @@ function App() {
 						</LineChart>
 					</ResponsiveContainer>
 				</CardContent>
-			</Card> */}
+			</Card>
 
 			{/* Tabela de Envios Recentes */}
-			{/* <Card>
+			<Card>
 				<CardHeader>
 					<CardTitle>Envios Recentes</CardTitle>
 				</CardHeader>
@@ -460,21 +381,27 @@ function App() {
 						</TableHeader>
 						<TableBody>
 							{recentSubmissions.map((submission, index) => (
-								<TableRow key={index}>
-									<TableCell className="font-medium">{submission.om}</TableCell>
-									<TableCell>{submission.processo}</TableCell>
-									<TableCell>{submission.dias}</TableCell>
+								// biome-ignore lint/suspicious/noArrayIndexKey: <nao tem id>
+								<TableRow key={submission.omName + index}>
+									<TableCell className="font-medium">
+										{submission.omName}
+									</TableCell>
+									<TableCell>
+										{processTypeLabels[submission.processType] ??
+											submission.processType}
+									</TableCell>
+									<TableCell>{formatDays(submission.daysDiff)}</TableCell>
 									<TableCell>
 										<Badge
 											variant={
-												submission.situacao === "Deferido"
+												submission.result === "DEFERIDO"
 													? "default"
-													: submission.situacao === "Indeferido"
+													: submission.result === "INDEFERIDO"
 														? "destructive"
 														: "secondary"
 											}
 										>
-											{submission.situacao}
+											{submission.result}
 										</Badge>
 									</TableCell>
 								</TableRow>
@@ -482,7 +409,7 @@ function App() {
 						</TableBody>
 					</Table>
 				</CardContent>
-			</Card> */}
+			</Card>
 		</div>
 	);
 }

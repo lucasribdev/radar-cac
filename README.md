@@ -67,23 +67,113 @@ create table if not exists public.submissions (
 
 Em projetos novos do Supabase, a função `gen_random_uuid()` vem habilitada pelo pacote `pgcrypto`. Se o banco retornar erro, habilite com `create extension if not exists "pgcrypto";`.
 
-### View de estatísticas
+### RPC de estatísticas
 
-View usada para métricas agregadas por tipo de processo:
+Função usada para métricas agregadas, com filtros opcionais por OM, tipo de processo e período (últimos N dias):
 
 ```sql
-create view submissions_stats as
-select
-  process_type,
-  count(*) as total,
-  avg(date_decision - date_protocol) as avg_days,
-  min(date_decision - date_protocol) as min_days,
-  max(date_decision - date_protocol) as max_days
-from submissions
-group by process_type;
+create or replace function public.get_submissions_stats(
+  p_om_name text default null,
+  p_period_to_days integer default null,
+  p_process_type public.process_type_enum default null
+)
+returns table (
+  "avgDays" integer,
+  "minDays" integer,
+  "maxDays" integer,
+  "total"  bigint
+)
+language sql
+as $$
+  select
+    avg((date_decision - date_protocol))::int as "avgDays",
+    min((date_decision - date_protocol))::int as "minDays",
+    max((date_decision - date_protocol))::int as "maxDays",
+    count(*)                        as "total"
+  from public.submissions
+  where
+    -- filtro opcional por om_name
+    (p_om_name is null or om_name = p_om_name)
+    -- filtro opcional por process_type
+    and (p_process_type is null or process_type = p_process_type)
+    -- filtro opcional por período em dias (últimos N dias)
+    and (
+      p_period_to_days is null
+      or date_decision >= current_date - p_period_to_days
+    );
+$$;
 ```
 
 Ela espera que `date_decision` e `date_protocol` estejam preenchidos para calcular as diferenças de dias.
+
+### RPC de estatísticas mensais
+
+Função para média de dias por mês (últimos 6 meses), com filtros opcionais por OM e tipo de processo:
+
+```sql
+create or replace function public.get_submissions_monthly_stats(
+  p_om_name text default null,
+  p_process_type public.process_type_enum default null
+)
+returns table (
+  "month" text,
+  "avgDays" integer
+)
+language sql
+as $$
+  with months as (
+    select
+      (date_trunc('month', current_date) - (i * interval '1 month'))::date as month_start
+    from generate_series(0, 5) as i
+  )
+  select
+    to_char(m.month_start, 'Mon') as "month",
+    avg((s.date_decision - s.date_protocol))::int as "avgDays"
+  from months m
+  left join public.submissions s
+    on date_trunc('month', s.date_decision) = m.month_start
+    and (p_om_name is null or s.om_name = p_om_name)
+    and (p_process_type is null or s.process_type = p_process_type)
+  group by m.month_start
+  order by m.month_start;
+$$;
+```
+
+### RPC de envios recentes
+
+Função para listar envios mais recentes (com filtros opcionais por OM e tipo):
+
+```sql
+create or replace function public.get_recent_submissions(
+  p_om_name text default null,
+  p_process_type public.process_type_enum default null,
+  p_limit integer default 10
+)
+returns table (
+  "omName" text,
+  "processType" public.process_type_enum,
+  "daysDiff" integer,
+  "result" public.process_result_enum,
+  "createdAt" timestamp with time zone
+)
+language sql
+as $$
+  select
+    s.om_name as "omName",
+    s.process_type as "processType",
+    (s.date_decision - s.date_protocol)::int as "daysDiff",
+    s.result as "result",
+    s.created_at as "createdAt"
+  from public.submissions s
+  where
+    (p_om_name is null or s.om_name = p_om_name)
+    and (p_process_type is null or s.process_type = p_process_type)
+  order by
+    s.date_decision desc,
+    s.created_at desc
+  limit p_limit;
+$$;
+```
 
 ## Linting & Formatting
 
