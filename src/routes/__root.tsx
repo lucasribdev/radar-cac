@@ -27,7 +27,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 				content: "width=device-width, initial-scale=1",
 			},
 			{
-				title: "Radar CAC",
+				title: "Radar CAC — Painel comunitário",
 			},
 		],
 		links: [
@@ -50,7 +50,24 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 			</head>
 			<body suppressHydrationWarning>
 				<Header />
+				<section className="bg-muted text-muted-foreground border-b border-border px-4 py-3 text-sm">
+					<p className="max-w-5xl mx-auto text-center">
+						<strong className="font-semibold text-foreground">Aviso:</strong> Os
+						dados são enviados pela comunidade, podem conter erros e não há
+						garantia de prazos reais.
+					</p>
+				</section>
 				<main className="min-h-screen">{children}</main>
+				<footer className="border-t border-border bg-card text-muted-foreground">
+					<div className="max-w-5xl mx-auto px-4 py-6 text-sm space-y-2">
+						<p className="text-foreground font-semibold">Radar CAC</p>
+						<p>
+							Projeto comunitário para visualizar prazos de processos CAC.
+							Informações enviadas por usuários podem ter erros e não
+							representam prazos garantidos.
+						</p>
+					</div>
+				</footer>
 				<Toaster />
 				<TanStackDevtools
 					config={{

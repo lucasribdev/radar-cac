@@ -227,9 +227,9 @@ function App() {
 	return (
 		<div className="container mx-auto px-4 py-8 space-y-8">
 			<div>
-				<h1 className="text-4xl font-bold text-foreground mb-2">Dashboard</h1>
+				<h1 className="text-4xl font-bold text-foreground mb-2">Visão geral</h1>
 				<p className="text-muted-foreground">
-					Estatísticas em tempo real dos processos Sinarm CAC
+					Painel comunitário para acompanhar prazos informados pelos usuários.
 				</p>
 			</div>
 

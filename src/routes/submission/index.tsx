@@ -158,7 +158,7 @@ function Submission() {
 					Enviar Processo
 				</h1>
 				<p className="text-muted-foreground">
-					Compartilhe o prazo do seu processo e ajude a comunidade
+					Compartilhe o prazo do seu processo para ajudar a comunidade.
 				</p>
 			</div>
 			<Card>
@@ -354,9 +354,9 @@ function Submission() {
 								htmlFor="terms"
 								className="text-sm leading-relaxed text-muted-foreground cursor-pointer"
 							>
-								Este site não é oficial da Polícia Federal e os dados são
-								fornecidos voluntariamente pela comunidade. Ao enviar, você
-								concorda em compartilhar estas informações publicamente.
+								Os dados são fornecidos voluntariamente pela comunidade. Ao
+								enviar, você concorda em compartilhar estas informações
+								publicamente.
 							</label>
 						</div>
 
