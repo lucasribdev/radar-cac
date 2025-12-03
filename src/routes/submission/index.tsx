@@ -66,12 +66,24 @@ type SubmissionPayload = {
 	date_decision: string;
 };
 
+const omPattern = /^[\p{L}0-9 .-]+$/u;
+
 async function insertSubmission(payload: SubmissionPayload) {
 	const { error } = await supabaseClient.from("submissions").insert(payload);
 
 	if (error) {
 		throw error;
 	}
+}
+
+function parseDate(value: string) {
+	if (!value) return null;
+	const parsed = new Date(value);
+	return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function normalizeOm(value: string) {
+	return value.trim().toUpperCase();
 }
 
 function FieldInfo({ field }: { field: AnyFieldApi }) {
@@ -122,9 +134,57 @@ function Submission() {
 				return;
 			}
 
+			const omNormalized = normalizeOm(value.om);
+			if (
+				!omNormalized ||
+				omNormalized.length < 3 ||
+				!omPattern.test(omNormalized)
+			) {
+				toast({
+					variant: "destructive",
+					title: "Erro",
+					description:
+						"Informe uma OM válida (mín. 3 caracteres, apenas letras/números).",
+				});
+				return;
+			}
+
+			const protocolDate = parseDate(value.dateProtocol);
+			const decisionDate = parseDate(value.dateDecision);
+			const today = new Date();
+			today.setHours(0, 0, 0, 0);
+
+			if (!protocolDate || !decisionDate) {
+				toast({
+					variant: "destructive",
+					title: "Erro",
+					description: "Datas inválidas. Verifique o formato.",
+				});
+				return;
+			}
+
+			if (protocolDate > today || decisionDate > today) {
+				toast({
+					variant: "destructive",
+					title: "Erro",
+					description: "Datas futuras não são permitidas.",
+				});
+				return;
+			}
+
+			if (decisionDate < protocolDate) {
+				toast({
+					variant: "destructive",
+					title: "Erro",
+					description:
+						"A data de decisão deve ser maior ou igual à data de protocolo.",
+				});
+				return;
+			}
+
 			const payload: SubmissionPayload = {
 				process_type: value.processType,
-				om_name: value.om,
+				om_name: omNormalized,
 				result: value.result,
 				date_protocol: value.dateProtocol,
 				date_decision: value.dateDecision,
@@ -216,11 +276,13 @@ function Submission() {
 								name="om"
 								validators={{
 									onChange: ({ value }) =>
-										!value
+										!value.trim()
 											? "A OM é obrigatória"
-											: value.length < 3
+											: value.trim().length < 3
 												? "A OM deve ter ao menos 3 caracteres"
-												: undefined,
+												: !omPattern.test(value.trim().toUpperCase())
+													? "Use apenas letras, números, espaços ou .-"
+													: undefined,
 									onChangeAsyncDebounceMs: 500,
 								}}
 								children={(field) => {
@@ -235,7 +297,9 @@ function Submission() {
 												type="text"
 												value={field.state.value}
 												onBlur={field.handleBlur}
-												onChange={(e) => field.handleChange(e.target.value)}
+												onChange={(e) =>
+													field.handleChange(e.target.value.toUpperCase())
+												}
 											/>
 											<FieldInfo field={field} />
 										</>
@@ -246,14 +310,30 @@ function Submission() {
 
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 							<div className="space-y-2">
-								<form.Field
-									name="dateProtocol"
-									validators={{
-										onChange: ({ value }) =>
-											!value ? "A data do procolo é obrigatória" : undefined,
-										onChangeAsyncDebounceMs: 500,
-									}}
-									children={(field) => {
+							<form.Field
+								name="dateProtocol"
+								validators={{
+									onChange: ({ value }) => {
+										const parsed = parseDate(value);
+										const today = new Date();
+										today.setHours(0, 0, 0, 0);
+										const decision = parseDate(
+											form.state.values.dateDecision,
+										);
+
+										return !value
+											? "A data do protocolo é obrigatória"
+											: !parsed
+												? "Data inválida"
+												: parsed > today
+													? "Data futura não permitida"
+													: decision && decision > parsed
+														? "A decisão não pode ser maior que o protocolo"
+														: undefined;
+									},
+									onChangeAsyncDebounceMs: 500,
+								}}
+								children={(field) => {
 										return (
 											<>
 												<Label htmlFor={field.name}>Data do Protocolo *</Label>
@@ -273,16 +353,30 @@ function Submission() {
 							</div>
 
 							<div className="space-y-2">
-								<form.Field
-									name="dateDecision"
-									validators={{
-										onChange: ({ value }) =>
-											!value
-												? "A data do deferimento é obrigatória"
-												: undefined,
-										onChangeAsyncDebounceMs: 500,
-									}}
-									children={(field) => {
+							<form.Field
+								name="dateDecision"
+								validators={{
+									onChange: ({ value }) => {
+										const parsed = parseDate(value);
+										const today = new Date();
+										today.setHours(0, 0, 0, 0);
+										const protocol = parseDate(
+											form.state.values.dateProtocol,
+										);
+
+										return !value
+											? "A data do deferimento é obrigatória"
+											: !parsed
+												? "Data inválida"
+												: parsed > today
+													? "Data futura não permitida"
+													: protocol && parsed > protocol
+														? "A data de decisão não pode ser maior que a data de protocolo"
+														: undefined;
+									},
+									onChangeAsyncDebounceMs: 500,
+								}}
+								children={(field) => {
 										return (
 											<>
 												<Label htmlFor={field.name}>

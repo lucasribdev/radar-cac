@@ -64,7 +64,8 @@ type PeriodoValue = (typeof periodos)[number]["value"];
 async function fetchOms() {
 	const { data, error } = await supabaseClient
 		.from("submissions")
-		.select("om_name");
+		.select("om_name", { count: "exact" })
+		.order("om_name", { ascending: true });
 
 	if (error) {
 		throw error;
