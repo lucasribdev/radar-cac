@@ -1,7 +1,7 @@
 /** biome-ignore-all lint/correctness/noChildrenProp: <usamos a prop children no tanstack form> */
 import type { AnyFieldApi } from "@tanstack/react-form";
 import { useForm } from "@tanstack/react-form";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Send } from "lucide-react";
 import { useState } from "react";
@@ -19,7 +19,6 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabaseClient } from "@/lib/supabaseClient";
-import { fetchOms } from "@/services/submissions";
 import {
 	PROCESS_RESULT_OPTIONS,
 	PROCESS_TYPE_OPTIONS,
@@ -83,15 +82,6 @@ function Submission() {
 	const { mutateAsync: submitProcess, isPending } = useMutation({
 		mutationFn: insertSubmission,
 	});
-	const {
-		data: omsPoliciaFederal = [],
-		isFetching: isLoadingOms,
-		error: omsError,
-	} = useQuery({
-		queryKey: ["oms-policia-federal"],
-		queryFn: fetchOms,
-	});
-	const [useCustomOm, setUseCustomOm] = useState(false);
 
 	const defaultValues: FormData = {
 		processType: "",
@@ -273,51 +263,16 @@ function Submission() {
 											<Label htmlFor={field.name}>
 												OM da Polícia Federal *
 											</Label>
-											<Select
-												name={`${field.name}-select`}
-												value={useCustomOm ? "__custom__" : field.state.value}
-												disabled={isLoadingOms}
-												onValueChange={(value) => {
-													if (value === "__custom__") {
-														setUseCustomOm(true);
-														field.handleChange("");
-													} else {
-														setUseCustomOm(false);
-														field.handleChange(value);
-													}
-												}}
-											>
-												<SelectTrigger className="w-full">
-													<SelectValue placeholder="Selecione a OM" />
-												</SelectTrigger>
-												<SelectContent>
-													{(omsError ? [] : omsPoliciaFederal).map((sigla) => (
-														<SelectItem key={sigla} value={sigla}>
-															{sigla}
-														</SelectItem>
-													))}
-													<SelectItem value="__custom__">
-														Não encontrei minha OM
-													</SelectItem>
-												</SelectContent>
-											</Select>
-											{useCustomOm ? (
-												<div className="mt-2 space-y-2">
-													<Label htmlFor={field.name}>
-														Digite a OM (caso não esteja na lista)
-													</Label>
-													<Input
-														id={field.name}
-														name={field.name}
-														type="text"
-														value={field.state.value}
-														onBlur={field.handleBlur}
-														onChange={(e) =>
-															field.handleChange(e.target.value.toUpperCase())
-														}
-													/>
-												</div>
-											) : null}
+											<Input
+												id={field.name}
+												name={field.name}
+												type="text"
+												value={field.state.value}
+												onBlur={field.handleBlur}
+												onChange={(e) =>
+													field.handleChange(e.target.value.toUpperCase())
+												}
+											/>
 											<FieldInfo field={field} />
 										</>
 									);
