@@ -5,6 +5,7 @@ import { useMutation } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Send } from "lucide-react";
 import { useState } from "react";
+import ReCAPTCHA from "react-google-recaptcha";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -76,9 +77,10 @@ function FieldInfo({ field }: { field: AnyFieldApi }) {
 }
 
 function Submission() {
+	const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+	const [acceptTerms, setAcceptTerms] = useState(false);
 	const navigate = useNavigate();
 	const { toast } = useToast();
-	const [aceiteTermos, setAceiteTermos] = useState(false);
 	const { mutateAsync: submitProcess, isPending } = useMutation({
 		mutationFn: insertSubmission,
 	});
@@ -94,7 +96,16 @@ function Submission() {
 	const form = useForm({
 		defaultValues,
 		onSubmit: async ({ value }) => {
-			if (!aceiteTermos) {
+			if (!captchaToken) {
+				toast({
+					variant: "destructive",
+					title: "Erro",
+					description: "Confirme o captcha.",
+				});
+				return;
+			}
+
+			if (!acceptTerms) {
 				toast({
 					variant: "destructive",
 					title: "Erro",
@@ -400,20 +411,29 @@ function Submission() {
 						</div>
 
 						<div className="flex items-start space-x-2 p-4 bg-muted rounded-lg">
+							{/** biome-ignore lint/correctness/useUniqueElementIds: <to use label> */}
 							<Checkbox
-								checked={aceiteTermos}
+								id="terms"
+								checked={acceptTerms}
 								onCheckedChange={(checked) =>
-									setAceiteTermos(checked as boolean)
+									setAcceptTerms(checked as boolean)
 								}
 							/>
-							<label
+							<Label
 								htmlFor="terms"
 								className="text-sm leading-relaxed text-muted-foreground cursor-pointer"
 							>
 								Os dados são fornecidos voluntariamente pela comunidade. Ao
 								enviar, você concorda em compartilhar estas informações
 								publicamente.
-							</label>
+							</Label>
+						</div>
+
+						<div className="flex justify-center">
+							<ReCAPTCHA
+								sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
+								onChange={(token) => setCaptchaToken(token)}
+							/>
 						</div>
 
 						<Button
