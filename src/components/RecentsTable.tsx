@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { formatDays } from "@/lib/format";
+import { formatDate, formatDays } from "@/lib/format";
 import { fetchRecentSubmissions } from "@/services/submissions";
 import { getProcessTypeLabel, type ProcessTypeEnum } from "@/types/enums";
 import { EmptyState, ErrorState, TableSkeleton } from "./LoadingStates";
@@ -61,8 +61,9 @@ export const RecentsTable = ({ processType, om }: RecentsTableProps) => {
 				<Table>
 					<TableHeader>
 						<TableRow>
-							<TableHead>Processo</TableHead>
+							<TableHead>Data de criação</TableHead>
 							<TableHead>OM</TableHead>
+							<TableHead>Processo</TableHead>
 							<TableHead>Dias</TableHead>
 							<TableHead>Situação</TableHead>
 						</TableRow>
@@ -70,11 +71,10 @@ export const RecentsTable = ({ processType, om }: RecentsTableProps) => {
 					<TableBody>
 						{recentSubmissions.map((submission) => (
 							<TableRow key={submission.id}>
+								<TableCell>{formatDate(submission.createdAt)}</TableCell>
+								<TableCell className="font-medium">{submission.om}</TableCell>
 								<TableCell>
 									{getProcessTypeLabel(submission.processType)}
-								</TableCell>
-								<TableCell className="font-medium">
-									{submission.omName}
 								</TableCell>
 								<TableCell>{formatDays(submission.avgDays)}</TableCell>
 								<TableCell>

@@ -34,7 +34,7 @@ const allowedProcessTypes = new Set(PROCESS_TYPES);
 
 type SubmissionPayload = {
 	process_type: ProcessType;
-	om_name: string;
+	om: string;
 	result: "DEFERIDO" | "INDEFERIDO";
 	date_protocol: string;
 	date_decision: string;
@@ -120,7 +120,7 @@ serve(async (req) => {
 
 	const {
 		process_type,
-		om_name,
+		om,
 		result,
 		date_protocol,
 		date_decision,
@@ -136,7 +136,7 @@ serve(async (req) => {
 		return errorResponse(400, "Tipo de processo ou resultado inválido");
 	}
 
-	const omNormalized = om_name?.trim().toUpperCase();
+	const omNormalized = om?.trim().toUpperCase();
 	if (!omNormalized || omNormalized.length < 3) {
 		return errorResponse(400, "OM inválida");
 	}
@@ -185,7 +185,7 @@ serve(async (req) => {
 
 	const { error } = await supabaseClient.from("submissions").insert({
 		process_type,
-		om_name: omNormalized,
+		om: omNormalized,
 		result,
 		date_protocol,
 		date_decision,

@@ -1,6 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { EmptyState, ErrorState, TableSkeleton } from "@/components/LoadingStates";
+import {
+	EmptyState,
+	ErrorState,
+	TableSkeleton,
+} from "@/components/LoadingStates";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -75,7 +79,7 @@ function Recents() {
 												{formatDate(submission.createdAt ?? "")}
 											</TableCell>
 											<TableCell className="font-medium">
-												{submission.omName}
+												{submission.om}
 											</TableCell>
 											<TableCell>
 												{getProcessTypeLabel(submission.processType)}

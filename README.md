@@ -44,7 +44,7 @@ Tabela `public.submissions` usada pelo app:
 - `id` (`uuid`, PK, default `gen_random_uuid()`)
 - `created_at` (`timestamptz`, default `now()`)
 - `process_type` (`public.process_type_enum`, not null)
-- `om_name` (`text`, not null)
+- `om` (`public.om_enum`, not null)
 - `result` (`public.process_result_enum`, not null)
 - `date_protocol` (`date`, not null)
 - `date_decision` (`date`, not null)
@@ -53,6 +53,7 @@ Enums esperados:
 
 - `public.process_result_enum`: `DEFERIDO`, `INDEFERIDO`
 - `public.process_type_enum`: `CR_OBTER`, `CR_REVALIDAR`, `CR_APOSTILAR`, `CR_CANCELAR`, `AQUISICAO_ARMA_SOLICITAR`, `ARMA_REGISTRAR`, `REGISTRO_ARMA_RENOVAR`, `TRANSFERENCIA_ARMA_CAC_SOLICITAR`, `ALTERAR_NIVEL_ATIRADOR`, `TRANSFERENCIA_ACERVO_MESMO_PROP`, `TRANSFERENCIA_ACERVO_CAC_OBTER`, `TRANSFERENCIA_SI_DP_PARA_CAC_SOLICITAR`, `TRANSFERENCIA_SI_DP_PARA_CAC_OBTER`, `TRANSFERENCIA_CAC_PARA_SI_DP_SOLICITAR`, `TRANSFERENCIA_CAC_PARA_SI_DP_OBTER`, `CR_SEGUNDA_VIA_SOLICITAR`, `CR_SEGUNDA_VIA_OBTER`, `REGISTRO_ARMA_SEGUNDA_VIA_OBTER`, `GUIA_TRÁFEGO_ESPECIAL_OBTER`
+- `public.om_enum`: `DPF/AGA/TO`, `DPF/ANS/GO`, `DPF/AQA/SP`, `DPF/ARS/RJ`, `DPF/ARU/SP`, `DPF/ATM/PA`, `DPF/BGE/RS`, `DPF/BRA/BA`, `DPF/BRG/MT`, `DPF/BRU/SP`, `DPF/CAC/PR`, `DPF/CAE/MT`, `DPF/CAS/SP`, `DPF/CCM/SC`, `DPF/CGE/PB`, `DPF/CHI/RS`, `DPF/CIT/ES`, `DPF/CRU/PE`, `DPF/CXA/MA`, `DPF/CXS/RS`, `DPF/CZO/SP`, `DPF/CZS/AC`, `DPF/DCQ/SC`, `DPF/DVS/MG`, `DPF/EPA/AC`, `DPF/FIG/PR`, `DPF/FSA/BA`, `DPF/GMI/RO`, `DPF/GOY/RJ`, `DPF/GPB/PR`, `DPF/GRA/PR`, `DPF/GVS/MG`, `DPF/IJI/SC`, `DPF/ILS/BA`, `DPF/IPN/MG`, `DPF/ITZ/MA`, `DPF/JFA/MG`, `DPF/JGO/RS`, `DPF/JLS/SP`, `DPF/JNE/CE`, `DPF/JPN/RO`, `DPF/JTI/GO`, `DPF/JVE/SC`, `DPF/JZO/BA`, `DPF/LDA/PR`, `DPF/LGE/SC`, `DPF/LIV/RS`, `DPF/MBA/PA`, `DPF/MCE/RJ`, `DPF/MGA/PR`, `DPF/MII/SP`, `DPF/MOC/MG`, `DPF/NIG/RJ`, `DPF/NRI/RJ`, `DPF/PAC/RR`, `DPF/PAT/PB`, `DPF/PCA/SP`, `DPF/PDE/SP`, `DPF/PGZ/PR`, `DPF/PHB/PI`, `DPF/PNG/PR`, `DPF/PSO/BA`, `DPF/ROO/MT`, `DPF/RPO/SP`, `DPF/SAG/RS`, `DPF/SBA/RS`, `DPF/SIC/MT`, `DPF/SMA/RS`, `DPF/STM/ES`, `DPF/STS/SP`, `DPF/UDI/MG`, `DPF/URA/MG`, `DPF/VRA/RJ`, `SR/PF/AC`, `SR/PF/AL`, `SR/PF/AM`, `SR/PF/AP`, `SR/PF/BA`, `SR/PF/CE`, `SR/PF/DF`, `SR/PF/ES`, `SR/PF/GO`, `SR/PF/MA`, `SR/PF/MG`, `SR/PF/MS`, `SR/PF/MT`, `SR/PF/PA`, `SR/PF/PB`, `SR/PF/PE`, `SR/PF/PI`, `SR/PF/PR`, `SR/PF/RJ`, `SR/PF/RN`, `SR/PF/RO`, `SR/PF/RR`, `SR/PF/RS`, `SR/PF/SC`, `SR/PF/SE`, `SR/PF/SP`, `SR/PF/TO`, `UCAC/JGO/RS`
 
 DDL recomendada:
 
@@ -80,12 +81,115 @@ create type if not exists public.process_type_enum as enum (
   'REGISTRO_ARMA_SEGUNDA_VIA_OBTER',
   'GUIA_TRÁFEGO_ESPECIAL_OBTER'
 );
+create type if not exists public.om_enum as enum (
+  'DPF/AGA/TO',
+  'DPF/ANS/GO',
+  'DPF/AQA/SP',
+  'DPF/ARS/RJ',
+  'DPF/ARU/SP',
+  'DPF/ATM/PA',
+  'DPF/BGE/RS',
+  'DPF/BRA/BA',
+  'DPF/BRG/MT',
+  'DPF/BRU/SP',
+  'DPF/CAC/PR',
+  'DPF/CAE/MT',
+  'DPF/CAS/SP',
+  'DPF/CCM/SC',
+  'DPF/CGE/PB',
+  'DPF/CHI/RS',
+  'DPF/CIT/ES',
+  'DPF/CRU/PE',
+  'DPF/CXA/MA',
+  'DPF/CXS/RS',
+  'DPF/CZO/SP',
+  'DPF/CZS/AC',
+  'DPF/DCQ/SC',
+  'DPF/DVS/MG',
+  'DPF/EPA/AC',
+  'DPF/FIG/PR',
+  'DPF/FSA/BA',
+  'DPF/GMI/RO',
+  'DPF/GOY/RJ',
+  'DPF/GPB/PR',
+  'DPF/GRA/PR',
+  'DPF/GVS/MG',
+  'DPF/IJI/SC',
+  'DPF/ILS/BA',
+  'DPF/IPN/MG',
+  'DPF/ITZ/MA',
+  'DPF/JFA/MG',
+  'DPF/JGO/RS',
+  'DPF/JLS/SP',
+  'DPF/JNE/CE',
+  'DPF/JPN/RO',
+  'DPF/JTI/GO',
+  'DPF/JVE/SC',
+  'DPF/JZO/BA',
+  'DPF/LDA/PR',
+  'DPF/LGE/SC',
+  'DPF/LIV/RS',
+  'DPF/MBA/PA',
+  'DPF/MCE/RJ',
+  'DPF/MGA/PR',
+  'DPF/MII/SP',
+  'DPF/MOC/MG',
+  'DPF/NIG/RJ',
+  'DPF/NRI/RJ',
+  'DPF/PAC/RR',
+  'DPF/PAT/PB',
+  'DPF/PCA/SP',
+  'DPF/PDE/SP',
+  'DPF/PGZ/PR',
+  'DPF/PHB/PI',
+  'DPF/PNG/PR',
+  'DPF/PSO/BA',
+  'DPF/ROO/MT',
+  'DPF/RPO/SP',
+  'DPF/SAG/RS',
+  'DPF/SBA/RS',
+  'DPF/SIC/MT',
+  'DPF/SMA/RS',
+  'DPF/STM/ES',
+  'DPF/STS/SP',
+  'DPF/UDI/MG',
+  'DPF/URA/MG',
+  'DPF/VRA/RJ',
+  'SR/PF/AC',
+  'SR/PF/AL',
+  'SR/PF/AM',
+  'SR/PF/AP',
+  'SR/PF/BA',
+  'SR/PF/CE',
+  'SR/PF/DF',
+  'SR/PF/ES',
+  'SR/PF/GO',
+  'SR/PF/MA',
+  'SR/PF/MG',
+  'SR/PF/MS',
+  'SR/PF/MT',
+  'SR/PF/PA',
+  'SR/PF/PB',
+  'SR/PF/PE',
+  'SR/PF/PI',
+  'SR/PF/PR',
+  'SR/PF/RJ',
+  'SR/PF/RN',
+  'SR/PF/RO',
+  'SR/PF/RR',
+  'SR/PF/RS',
+  'SR/PF/SC',
+  'SR/PF/SE',
+  'SR/PF/SP',
+  'SR/PF/TO',
+  'UCAC/JGO/RS'
+);
 
 create table if not exists public.submissions (
   id uuid not null default gen_random_uuid(),
   created_at timestamp with time zone not null default now(),
   process_type public.process_type_enum not null,
-  om_name text not null,
+  om public.om_enum not null,
   result public.process_result_enum not null,
   date_protocol date not null,
   date_decision date not null,
@@ -95,13 +199,21 @@ create table if not exists public.submissions (
 
 Em projetos novos do Supabase, a função `gen_random_uuid()` vem habilitada pelo pacote `pgcrypto`. Se o banco retornar erro, habilite com `create extension if not exists "pgcrypto";`.
 
+**Caso já exista a coluna `om` como `text`**: crie o tipo `public.om_enum`, ajuste os dados divergentes e então altere a coluna:
+
+```sql
+alter table public.submissions
+  alter column om type public.om_enum
+  using om::public.om_enum;
+```
+
 ### RPCs necessárias
 
 Função para métricas agregadas com filtros opcionais (`get_submissions_stats`):
 
 ```sql
 create or replace function public.get_submissions_stats(
-  p_om_name text default null,
+  p_om public.om_enum default null,
   p_period_to_days integer default null,
   p_process_type public.process_type_enum default null
 )
@@ -120,7 +232,7 @@ as $$
     count(*)                        as "total"
   from public.submissions
   where
-    (p_om_name is null or om_name = p_om_name)
+    (p_om is null or om = p_om)
     and (p_process_type is null or process_type = p_process_type)
     and (
       p_period_to_days is null
@@ -133,7 +245,7 @@ Função para média de dias por mês (últimos 6 meses), com filtros opcionais 
 
 ```sql
 create or replace function public.get_submissions_monthly_stats(
-  p_om_name text default null,
+  p_om public.om_enum default null,
   p_process_type public.process_type_enum default null
 )
 returns table (
@@ -154,24 +266,24 @@ as $$
     from months m
     left join public.submissions s
       on date_trunc('month', s.date_decision) = m.month_start
-      and (p_om_name is null or s.om_name = p_om_name)
+      and (p_om is null or s.om = p_om)
       and (p_process_type is null or s.process_type = p_process_type)
     group by m.month_start
   )
   select
     case month_number
-      when 1 then 'Jan'
-      when 2 then 'Fev'
-      when 3 then 'Mar'
-      when 4 then 'Abr'
-      when 5 then 'Mai'
-      when 6 then 'Jun'
-      when 7 then 'Jul'
-      when 8 then 'Ago'
-      when 9 then 'Set'
-      when 10 then 'Out'
-      when 11 then 'Nov'
-      when 12 then 'Dez'
+      when 1 then 'Janeiro'
+      when 2 then 'Fevereiro'
+      when 3 then 'Março'
+      when 4 then 'Abril'
+      when 5 then 'Maio'
+      when 6 then 'Junho'
+      when 7 then 'Julho'
+      when 8 then 'Agosto'
+      when 9 then 'Setembro'
+      when 10 then 'Outubro'
+      when 11 then 'Novembro'
+      when 12 then 'Dezembro'
     end as "month",
     avg_days as "avgDays"
   from translated
@@ -183,13 +295,13 @@ Função para listar envios mais recentes (com filtros opcionais e limite) (`get
 
 ```sql
 create or replace function public.get_recent_submissions(
-  p_om_name text default null,
+  p_om public.om_enum default null,
   p_process_type public.process_type_enum default null,
   p_limit integer default 10
 )
 returns table (
   "id" uuid,
-  "omName" text,
+  "om" public.om_enum,
   "processType" public.process_type_enum,
   "avgDays" integer,
   "result" public.process_result_enum,
@@ -199,14 +311,14 @@ language sql
 as $$
   select
     s.id as "id",
-    s.om_name as "omName",
+    s.om as "om",
     s.process_type as "processType",
     (s.date_decision - s.date_protocol)::int as "avgDays",
     s.result as "result",
     s.created_at as "createdAt"
   from public.submissions s
   where
-    (p_om_name is null or s.om_name = p_om_name)
+    (p_om is null or s.om = p_om)
     and (p_process_type is null or s.process_type = p_process_type)
   order by
     s.date_decision desc,

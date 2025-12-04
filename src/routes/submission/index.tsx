@@ -21,6 +21,8 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { supabaseClient } from "@/lib/supabaseClient";
 import {
+	type OmEnum,
+	PF_OM_OPTIONS,
 	PROCESS_RESULT_OPTIONS,
 	PROCESS_TYPE_OPTIONS,
 	type ProcessResultEnum,
@@ -31,9 +33,10 @@ export const Route = createFileRoute("/submission/")({ component: Submission });
 
 const processTypeOptions = PROCESS_TYPE_OPTIONS;
 const processResultOptions = PROCESS_RESULT_OPTIONS;
+const pfOmOptions = PF_OM_OPTIONS;
 type FormData = {
 	processType: ProcessTypeEnum | "";
-	om: string;
+	om: OmEnum | "";
 	dateProtocol: string;
 	dateDecision: string;
 	result: ProcessResultEnum | "";
@@ -41,7 +44,7 @@ type FormData = {
 
 type SubmissionPayload = {
 	process_type: ProcessTypeEnum;
-	om_name: string;
+	om: OmEnum;
 	result: ProcessResultEnum;
 	date_protocol: string;
 	date_decision: string;
@@ -65,10 +68,6 @@ function parseDate(value: string) {
 	if (!value) return null;
 	const parsed = new Date(value);
 	return Number.isNaN(parsed.getTime()) ? null : parsed;
-}
-
-function normalizeOm(value: string) {
-	return value.trim().toUpperCase();
 }
 
 function FieldInfo({ field }: { field: AnyFieldApi }) {
@@ -120,22 +119,11 @@ function Submission() {
 				return;
 			}
 
-			if (!value.processType || !value.result) {
+			if (!value.processType || !value.result || !value.om) {
 				toast({
 					variant: "destructive",
 					title: "Erro",
 					description: "Preencha todos os campos obrigatórios antes de enviar.",
-				});
-				return;
-			}
-
-			const omNormalized = normalizeOm(value.om);
-			if (!omNormalized || omNormalized.length < 3) {
-				toast({
-					variant: "destructive",
-					title: "Erro",
-					description:
-						"Informe uma OM válida (mín. 3 caracteres, apenas letras/números).",
 				});
 				return;
 			}
@@ -175,7 +163,7 @@ function Submission() {
 
 			const payload: SubmissionPayload = {
 				process_type: value.processType,
-				om_name: omNormalized,
+				om: value.om,
 				result: value.result,
 				date_protocol: value.dateProtocol,
 				date_decision: value.dateDecision,
@@ -270,11 +258,7 @@ function Submission() {
 								name="om"
 								validators={{
 									onChange: ({ value }) =>
-										!value.trim()
-											? "A OM é obrigatória"
-											: value.trim().length < 3
-												? "A OM deve ter ao menos 3 caracteres"
-												: undefined,
+										!value ? "A OM é obrigatória" : undefined,
 									onChangeAsyncDebounceMs: 500,
 								}}
 								children={(field) => {
@@ -283,16 +267,27 @@ function Submission() {
 											<Label htmlFor={field.name}>
 												OM da Polícia Federal *
 											</Label>
-											<Input
-												id={field.name}
+											<Select
 												name={field.name}
-												type="text"
 												value={field.state.value}
-												onBlur={field.handleBlur}
-												onChange={(e) =>
-													field.handleChange(e.target.value.toUpperCase())
+												onValueChange={(value) =>
+													field.handleChange(value as FormData["om"])
 												}
-											/>
+											>
+												<SelectTrigger className="w-full">
+													<SelectValue placeholder="Selecione a OM" />
+												</SelectTrigger>
+												<SelectContent>
+													{pfOmOptions.map((omOption) => (
+														<SelectItem
+															key={omOption.value}
+															value={omOption.value}
+														>
+															{omOption.label}
+														</SelectItem>
+													))}
+												</SelectContent>
+											</Select>
 											<FieldInfo field={field} />
 										</>
 									);

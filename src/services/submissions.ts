@@ -15,29 +15,12 @@ export type MonthlyStat = {
 
 export type RecentSubmission = {
 	id: string;
-	createdAt?: string;
-	omName: string;
+	createdAt: string;
+	om: string;
 	processType: ProcessTypeEnum;
 	result: string;
 	avgDays: number | null;
 };
-
-export async function fetchOms() {
-	const { data, error } = await supabaseClient
-		.from("submissions")
-		.select("om_name", { count: "exact" })
-		.order("om_name", { ascending: true });
-
-	if (error) {
-		throw error;
-	}
-
-	const uniqueOms = Array.from(
-		new Set((data ?? []).map((item) => item.om_name)),
-	);
-	uniqueOms.sort((a, b) => a.localeCompare(b));
-	return uniqueOms;
-}
 
 export async function fetchSubmissionStats({
 	processType,
@@ -49,7 +32,7 @@ export async function fetchSubmissionStats({
 	days: number;
 }): Promise<AggregatedStats> {
 	const { data, error } = await supabaseClient.rpc("get_submissions_stats", {
-		p_om_name: om === "Todas" ? null : om,
+		p_om: om === "Todas" ? null : om,
 		p_period_to_days: days,
 		p_process_type: processType === "Todos" ? null : processType,
 	});
@@ -71,7 +54,7 @@ export async function fetchMonthlyStats({
 	const { data, error } = await supabaseClient.rpc(
 		"get_submissions_monthly_stats",
 		{
-			p_om_name: om === "Todas" ? null : om,
+			p_om: om === "Todas" ? null : om,
 			p_process_type: processType === "Todos" ? null : processType,
 		},
 	);
@@ -93,7 +76,7 @@ export async function fetchRecentSubmissions({
 	limit?: number;
 } = {}): Promise<RecentSubmission[]> {
 	const { data, error } = await supabaseClient.rpc("get_recent_submissions", {
-		p_om_name: om === "Todas" ? null : om,
+		p_om: om === "Todas" ? null : om,
 		p_process_type: processType === "Todos" ? null : processType,
 		p_limit: limit,
 	});
