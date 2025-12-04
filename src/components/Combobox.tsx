@@ -1,4 +1,4 @@
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronDownIcon } from "lucide-react";
 import * as React from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -50,10 +50,13 @@ export function Combobox({
 					variant="outline"
 					role="combobox"
 					aria-expanded={open}
-					className="w-full justify-between font-normal"
+					className={cn(
+						"w-full justify-between font-normal border-input hover:bg-transparent hover:text-none",
+						!selectedLabel && "text-muted-foreground",
+					)}
 				>
 					{selectedLabel ?? placeholder}
-					<ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+					<ChevronDownIcon className="size-4 opacity-50" />
 				</Button>
 			</PopoverTrigger>
 			<PopoverContent
