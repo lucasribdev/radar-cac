@@ -36,8 +36,10 @@ type OmValue = OmEnum;
 const omOptions: { value: OmValue; label: string }[] = PF_OM_OPTIONS;
 
 function App() {
-	const [processType, setProcessType] = useState<ProcessTypeValue | "">("");
-	const [om, setOm] = useState<OmValue | "">("");
+	const [processType, setProcessType] = useState<ProcessTypeValue | "">(
+		"AQUISICAO_ARMA_SOLICITAR",
+	);
+	const [om, setOm] = useState<OmValue | "">("SR/PF/SP");
 	const [period, setPeriod] = useState<PeriodValue>("90d");
 
 	return (
