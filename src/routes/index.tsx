@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { EvolutionChart } from "@/components/EvolutionChart";
 import { ProcessStats } from "@/components/ProcessStats";
 import { RecentsTable } from "@/components/RecentsTable";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,7 +11,11 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { PF_OM_OPTIONS, PROCESS_TYPE_OPTIONS, type OmEnum } from "@/types/enums";
+import {
+	type OmEnum,
+	PF_OM_OPTIONS,
+	PROCESS_TYPE_OPTIONS,
+} from "@/types/enums";
 
 export const Route = createFileRoute("/")({ component: App });
 
@@ -82,7 +85,10 @@ function App() {
 							<Label className="text-sm font-medium text-foreground">
 								OM da Polícia Federal
 							</Label>
-							<Select value={om} onValueChange={(value) => setOm(value as OmValue)}>
+							<Select
+								value={om}
+								onValueChange={(value) => setOm(value as OmValue)}
+							>
 								<SelectTrigger className="w-full">
 									<SelectValue placeholder="Selecione a OM" />
 								</SelectTrigger>
@@ -124,7 +130,7 @@ function App() {
 			<ProcessStats processType={processType} om={om} period={period} />
 
 			{/* Gráfico */}
-			<EvolutionChart processType={processType} om={om} />
+			{/* <EvolutionChart processType={processType} om={om} /> */}
 
 			{/* Tabela de Envios Recentes */}
 			<RecentsTable processType={processType} om={om} />

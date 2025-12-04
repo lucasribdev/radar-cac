@@ -65,7 +65,7 @@ function Recents() {
 							<Table>
 								<TableHeader>
 									<TableRow>
-										<TableHead>Data</TableHead>
+										<TableHead>Data de criação</TableHead>
 										<TableHead>OM</TableHead>
 										<TableHead>Processo</TableHead>
 										<TableHead>Dias</TableHead>

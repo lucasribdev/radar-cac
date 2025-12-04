@@ -71,7 +71,9 @@ export const RecentsTable = ({ processType, om }: RecentsTableProps) => {
 					<TableBody>
 						{recentSubmissions.map((submission) => (
 							<TableRow key={submission.id}>
-								<TableCell>{formatDate(submission.createdAt)}</TableCell>
+								<TableCell className="text-muted-foreground">
+									{formatDate(submission.createdAt)}
+								</TableCell>
 								<TableCell className="font-medium">{submission.om}</TableCell>
 								<TableCell>
 									{getProcessTypeLabel(submission.processType)}
