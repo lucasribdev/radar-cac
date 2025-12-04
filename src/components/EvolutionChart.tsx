@@ -9,13 +9,13 @@ import {
 	YAxis,
 } from "recharts";
 import { fetchMonthlyStats } from "@/services/submissions";
-import type { ProcessTypeEnum } from "@/types/enums";
+import type { OmEnum, ProcessTypeEnum } from "@/types/enums";
 import { ChartSkeleton, EmptyState, ErrorState } from "./LoadingStates";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 
 interface EvolutionChartProps {
-	processType?: ProcessTypeEnum | "Todos";
-	om?: string | "Todas";
+	processType?: ProcessTypeEnum;
+	om?: OmEnum;
 }
 
 export const EvolutionChart = ({ processType, om }: EvolutionChartProps) => {

@@ -3,13 +3,13 @@ import { Calendar, FileText, TrendingUp } from "lucide-react";
 import { formatDays, formatNumber } from "@/lib/format";
 import type { PeriodValue } from "@/routes";
 import { fetchSubmissionStats } from "@/services/submissions";
-import type { ProcessTypeEnum } from "@/types/enums";
+import type { OmEnum, ProcessTypeEnum } from "@/types/enums";
 import { EmptyState, ErrorState, StatCardSkeleton } from "./LoadingStates";
 import { StatCard } from "./StatCard";
 
 interface ProcessStatsProps {
-	processType: ProcessTypeEnum | "Todos";
-	om: string | "Todas";
+	processType: ProcessTypeEnum;
+	om: OmEnum;
 	period: PeriodValue;
 }
 

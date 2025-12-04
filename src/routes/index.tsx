@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { Combobox } from "@/components/Combobox";
+import { EmptyState } from "@/components/LoadingStates";
 import { ProcessStats } from "@/components/ProcessStats";
 import { RecentsTable } from "@/components/RecentsTable";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,12 +21,8 @@ import {
 
 export const Route = createFileRoute("/")({ component: App });
 
-const processTypeOptions = [
-	{ value: "Todos", label: "Todos" },
-	...PROCESS_TYPE_OPTIONS,
-] as const;
-
-type ProcessTypeValue = (typeof processTypeOptions)[number]["value"];
+const processTypeOptions = PROCESS_TYPE_OPTIONS;
+type ProcessTypeValue = (typeof PROCESS_TYPE_OPTIONS)[number]["value"];
 
 const periodOptions = [
 	{ value: "7d", label: "Últimos 7 dias" },
@@ -35,15 +32,12 @@ const periodOptions = [
 ] as const;
 
 export type PeriodValue = (typeof periodOptions)[number]["value"];
-type OmValue = OmEnum | "Todas";
-const omOptions: { value: OmValue; label: string }[] = [
-	{ value: "Todas", label: "Todas" },
-	...PF_OM_OPTIONS,
-];
+type OmValue = OmEnum;
+const omOptions: { value: OmValue; label: string }[] = PF_OM_OPTIONS;
 
 function App() {
-	const [processType, setProcessType] = useState<ProcessTypeValue>("Todos");
-	const [om, setOm] = useState<OmValue>("Todas");
+	const [processType, setProcessType] = useState<ProcessTypeValue | "">("");
+	const [om, setOm] = useState<OmValue | "">("");
 	const [period, setPeriod] = useState<PeriodValue>("90d");
 
 	return (
@@ -70,7 +64,7 @@ function App() {
 								}
 							>
 								<SelectTrigger className="w-full">
-									<SelectValue />
+									<SelectValue placeholder="Selecione o processo" />
 								</SelectTrigger>
 								<SelectContent>
 									{processTypeOptions.map((tipo) => (
@@ -89,8 +83,8 @@ function App() {
 							<Combobox
 								options={omOptions}
 								value={om}
-								onChange={(value) => setOm((value as OmValue) || "Todas")}
-								placeholder="Todas as OMs"
+								onChange={(value) => setOm(value as OmValue)}
+								placeholder="Selecione a OM"
 								searchPlaceholder="Pesquisar a OM..."
 								emptyMessage="Nenhuma OM encontrada."
 							/>
@@ -120,14 +114,23 @@ function App() {
 				</CardContent>
 			</Card>
 
-			{/* Cards de Estatísticas */}
-			<ProcessStats processType={processType} om={om} period={period} />
+			{processType === "" || om === "" ? (
+				<EmptyState
+					title="Selecione os filtros"
+					description="Escolha o tipo de processo e a OM da Polícia Federal para visualizar as estatísticas."
+				/>
+			) : (
+				<>
+					{/* Cards de Estatísticas */}
+					<ProcessStats processType={processType} om={om} period={period} />
 
-			{/* Gráfico */}
-			{/* <EvolutionChart processType={processType} om={om} /> */}
+					{/* Gráfico */}
+					{/* <EvolutionChart processType={processType} om={om} /> */}
 
-			{/* Tabela de Envios Recentes */}
-			<RecentsTable processType={processType} om={om} />
+					{/* Tabela de Envios Recentes */}
+					<RecentsTable processType={processType} om={om} />
+				</>
+			)}
 		</div>
 	);
 }

@@ -1,5 +1,5 @@
 import { supabaseClient } from "@/lib/supabaseClient";
-import type { ProcessTypeEnum } from "@/types/enums";
+import type { OmEnum, ProcessTypeEnum } from "@/types/enums";
 
 export type AggregatedStats = {
 	total: number;
@@ -16,8 +16,8 @@ export type MonthlyStat = {
 export type RecentSubmission = {
 	id: string;
 	createdAt: string;
-	om: string;
-	processType: ProcessTypeEnum;
+	om: OmEnum | "";
+	processType: ProcessTypeEnum | "";
 	result: string;
 	avgDays: number | null;
 };
@@ -27,14 +27,14 @@ export async function fetchSubmissionStats({
 	om,
 	days,
 }: {
-	processType?: ProcessTypeEnum | "Todos";
-	om?: string | "Todas";
+	processType?: ProcessTypeEnum;
+	om?: OmEnum;
 	days: number;
 }): Promise<AggregatedStats> {
 	const { data, error } = await supabaseClient.rpc("get_submissions_stats", {
-		p_om: om === "Todas" ? null : om,
+		p_om: om ?? null,
 		p_period_to_days: days,
-		p_process_type: processType === "Todos" ? null : processType,
+		p_process_type: processType ?? null,
 	});
 
 	if (error) {
@@ -48,14 +48,14 @@ export async function fetchMonthlyStats({
 	processType,
 	om,
 }: {
-	processType?: ProcessTypeEnum | "Todos";
-	om?: string | "Todas";
+	processType?: ProcessTypeEnum;
+	om?: OmEnum;
 }): Promise<MonthlyStat[]> {
 	const { data, error } = await supabaseClient.rpc(
 		"get_submissions_monthly_stats",
 		{
-			p_om: om === "Todas" ? null : om,
-			p_process_type: processType === "Todos" ? null : processType,
+			p_om: om ?? null,
+			p_process_type: processType ?? null,
 		},
 	);
 
@@ -71,13 +71,13 @@ export async function fetchRecentSubmissions({
 	om,
 	limit = 6,
 }: {
-	processType?: ProcessTypeEnum | "Todos";
-	om?: string | "Todas";
+	processType?: ProcessTypeEnum;
+	om?: OmEnum;
 	limit?: number;
 } = {}): Promise<RecentSubmission[]> {
 	const { data, error } = await supabaseClient.rpc("get_recent_submissions", {
-		p_om: om === "Todas" ? null : om,
-		p_process_type: processType === "Todos" ? null : processType,
+		p_om: om ?? null,
+		p_process_type: processType ?? null,
 		p_limit: limit,
 	});
 

@@ -1,7 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { formatDate, formatDays } from "@/lib/format";
 import { fetchRecentSubmissions } from "@/services/submissions";
-import { getProcessTypeLabel, type ProcessTypeEnum } from "@/types/enums";
+import {
+	getProcessTypeLabel,
+	type OmEnum,
+	type ProcessTypeEnum,
+} from "@/types/enums";
 import { EmptyState, ErrorState, TableSkeleton } from "./LoadingStates";
 import { Badge } from "./ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
@@ -15,8 +19,8 @@ import {
 } from "./ui/table";
 
 interface RecentsTableProps {
-	processType: ProcessTypeEnum | "Todos";
-	om: string | "Todas";
+	processType: ProcessTypeEnum;
+	om: OmEnum;
 }
 
 export const RecentsTable = ({ processType, om }: RecentsTableProps) => {
