@@ -52,12 +52,9 @@ type SubmissionRequest = SubmissionPayload & {
 };
 
 async function submitViaEdgeFunction(payload: SubmissionRequest) {
-	const { error } = await supabaseClient.functions.invoke(
-		"submit-submission",
-		{
-			body: payload,
-		},
-	);
+	const { error } = await supabaseClient.functions.invoke("submit-submission", {
+		body: payload,
+	});
 
 	if (error) {
 		throw error;
@@ -423,13 +420,13 @@ function Submission() {
 						</div>
 
 						<div className="flex items-start space-x-2 p-4 bg-muted rounded-lg">
-							{/** biome-ignore lint/correctness/useUniqueElementIds: <to use label> */}
 							<Checkbox
-								id="terms"
+								id={"terms"}
 								checked={acceptTerms}
 								onCheckedChange={(checked) =>
 									setAcceptTerms(checked as boolean)
 								}
+								className="mt-1"
 							/>
 							<Label
 								htmlFor="terms"
