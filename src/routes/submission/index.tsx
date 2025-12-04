@@ -6,6 +6,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Send } from "lucide-react";
 import { useState } from "react";
 import ReCAPTCHA from "react-google-recaptcha";
+import { Combobox } from "@/components/Combobox";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -267,27 +268,16 @@ function Submission() {
 											<Label htmlFor={field.name}>
 												OM da Polícia Federal *
 											</Label>
-											<Select
-												name={field.name}
+											<Combobox
+												options={pfOmOptions}
 												value={field.state.value}
-												onValueChange={(value) =>
+												onChange={(value) =>
 													field.handleChange(value as FormData["om"])
 												}
-											>
-												<SelectTrigger className="w-full">
-													<SelectValue placeholder="Selecione a OM" />
-												</SelectTrigger>
-												<SelectContent>
-													{pfOmOptions.map((omOption) => (
-														<SelectItem
-															key={omOption.value}
-															value={omOption.value}
-														>
-															{omOption.label}
-														</SelectItem>
-													))}
-												</SelectContent>
-											</Select>
+												placeholder="Selecione a OM"
+												searchPlaceholder="Pesquisar a OM"
+												emptyMessage="Nenhuma OM encontrada."
+											/>
 											<FieldInfo field={field} />
 										</>
 									);

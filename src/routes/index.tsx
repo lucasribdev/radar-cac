@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { Combobox } from "@/components/Combobox";
 import { ProcessStats } from "@/components/ProcessStats";
 import { RecentsTable } from "@/components/RecentsTable";
 import { Card, CardContent } from "@/components/ui/card";
@@ -85,21 +86,14 @@ function App() {
 							<Label className="text-sm font-medium text-foreground">
 								OM da Polícia Federal
 							</Label>
-							<Select
+							<Combobox
+								options={omOptions}
 								value={om}
-								onValueChange={(value) => setOm(value as OmValue)}
-							>
-								<SelectTrigger className="w-full">
-									<SelectValue placeholder="Selecione a OM" />
-								</SelectTrigger>
-								<SelectContent>
-									{omOptions.map((omOption) => (
-										<SelectItem key={omOption.value} value={omOption.value}>
-											{omOption.label}
-										</SelectItem>
-									))}
-								</SelectContent>
-							</Select>
+								onChange={(value) => setOm((value as OmValue) || "Todas")}
+								placeholder="Todas as OMs"
+								searchPlaceholder="Pesquisar a OM..."
+								emptyMessage="Nenhuma OM encontrada."
+							/>
 						</div>
 
 						<div className="space-y-2">

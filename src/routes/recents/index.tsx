@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/table";
 import { formatDate, formatDays } from "@/lib/format";
 import { fetchRecentSubmissions } from "@/services/submissions";
-import { getProcessTypeLabel } from "@/types/enums";
+import { getOmLabel, getProcessTypeLabel } from "@/types/enums";
 
 export const Route = createFileRoute("/recents/")({ component: Recents });
 
@@ -79,7 +79,7 @@ function Recents() {
 												{formatDate(submission.createdAt ?? "")}
 											</TableCell>
 											<TableCell className="font-medium">
-												{submission.om}
+												{getOmLabel(submission.om)}
 											</TableCell>
 											<TableCell>
 												{getProcessTypeLabel(submission.processType)}
