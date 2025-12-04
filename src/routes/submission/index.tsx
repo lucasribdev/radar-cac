@@ -1,7 +1,7 @@
 /** biome-ignore-all lint/correctness/noChildrenProp: <usamos a prop children no tanstack form> */
 import type { AnyFieldApi } from "@tanstack/react-form";
 import { useForm } from "@tanstack/react-form";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Send } from "lucide-react";
 import { useState } from "react";
@@ -86,7 +86,6 @@ function Submission() {
 	const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 	const [acceptTerms, setAcceptTerms] = useState(false);
 	const navigate = useNavigate();
-	const queryClient = useQueryClient();
 	const { toast } = useToast();
 	const { mutateAsync: submitProcess, isPending } = useMutation({
 		mutationFn: submitViaEdgeFunction,
@@ -187,6 +186,7 @@ function Submission() {
 					...payload,
 					captchaToken,
 				});
+<<<<<<< ours
 				await queryClient.invalidateQueries({
 					predicate: ({ queryKey }) =>
 						[
@@ -196,6 +196,8 @@ function Submission() {
 							"oms-policia-federal",
 						].includes(queryKey[0] as string),
 				});
+=======
+>>>>>>> theirs
 				toast({
 					title: "Processo enviado com sucesso!",
 					description: "Obrigado por contribuir com a comunidade.",
