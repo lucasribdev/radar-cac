@@ -7,8 +7,33 @@ const corsHeaders = {
 		"authorization, x-client-info, apikey, content-type",
 };
 
+const PROCESS_TYPES = [
+	"CR_OBTER",
+	"CR_REVALIDAR",
+	"CR_APOSTILAR",
+	"CR_CANCELAR",
+	"AQUISICAO_ARMA_SOLICITAR",
+	"ARMA_REGISTRAR",
+	"REGISTRO_ARMA_RENOVAR",
+	"TRANSFERENCIA_ARMA_CAC_SOLICITAR",
+	"ALTERAR_NIVEL_ATIRADOR",
+	"TRANSFERENCIA_ACERVO_MESMO_PROP",
+	"TRANSFERENCIA_ACERVO_CAC_OBTER",
+	"TRANSFERENCIA_SI_DP_PARA_CAC_SOLICITAR",
+	"TRANSFERENCIA_SI_DP_PARA_CAC_OBTER",
+	"TRANSFERENCIA_CAC_PARA_SI_DP_SOLICITAR",
+	"TRANSFERENCIA_CAC_PARA_SI_DP_OBTER",
+	"CR_SEGUNDA_VIA_SOLICITAR",
+	"CR_SEGUNDA_VIA_OBTER",
+	"REGISTRO_ARMA_SEGUNDA_VIA_OBTER",
+	"GUIA_TRÁFEGO_ESPECIAL_OBTER",
+] as const;
+type ProcessType = (typeof PROCESS_TYPES)[number];
+
+const allowedProcessTypes = new Set(PROCESS_TYPES);
+
 type SubmissionPayload = {
-	process_type: "CR" | "AUTORIZACAO_COMPRA" | "CRAF" | "GUIA_TRAFEGO";
+	process_type: ProcessType;
 	om_name: string;
 	result: "DEFERIDO" | "INDEFERIDO";
 	date_protocol: string;
@@ -16,12 +41,6 @@ type SubmissionPayload = {
 	captchaToken: string;
 };
 
-const allowedProcessTypes = new Set<SubmissionPayload["process_type"]>([
-	"CR",
-	"AUTORIZACAO_COMPRA",
-	"CRAF",
-	"GUIA_TRAFEGO",
-]);
 const allowedResults = new Set<SubmissionPayload["result"]>([
 	"DEFERIDO",
 	"INDEFERIDO",
