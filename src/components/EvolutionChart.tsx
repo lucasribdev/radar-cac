@@ -73,6 +73,7 @@ export const EvolutionChart = ({ processType, om }: EvolutionChartProps) => {
 							}}
 						/>
 						<Line
+							name="Média de dias"
 							type="monotone"
 							dataKey="avgDays"
 							strokeWidth={3}

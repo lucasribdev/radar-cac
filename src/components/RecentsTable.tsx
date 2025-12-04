@@ -61,8 +61,8 @@ export const RecentsTable = ({ processType, om }: RecentsTableProps) => {
 				<Table>
 					<TableHeader>
 						<TableRow>
-							<TableHead>OM</TableHead>
 							<TableHead>Processo</TableHead>
+							<TableHead>OM</TableHead>
 							<TableHead>Dias</TableHead>
 							<TableHead>Situação</TableHead>
 						</TableRow>
@@ -70,11 +70,11 @@ export const RecentsTable = ({ processType, om }: RecentsTableProps) => {
 					<TableBody>
 						{recentSubmissions.map((submission) => (
 							<TableRow key={submission.id}>
-								<TableCell className="font-medium">
-									{submission.omName}
-								</TableCell>
 								<TableCell>
 									{getProcessTypeLabel(submission.processType)}
+								</TableCell>
+								<TableCell className="font-medium">
+									{submission.omName}
 								</TableCell>
 								<TableCell>{formatDays(submission.avgDays)}</TableCell>
 								<TableCell>
