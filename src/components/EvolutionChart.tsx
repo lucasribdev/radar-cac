@@ -42,7 +42,10 @@ export const EvolutionChart = ({ processType, om }: EvolutionChartProps) => {
 		);
 	}
 
-	if (!chartData?.length) {
+	if (
+		!chartData?.length ||
+		chartData.every(({ avgDays }) => avgDays === null)
+	) {
 		return (
 			<EmptyState
 				title="Sem dados para exibir"
