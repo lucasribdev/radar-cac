@@ -186,18 +186,6 @@ function Submission() {
 					...payload,
 					captchaToken,
 				});
-<<<<<<< ours
-				await queryClient.invalidateQueries({
-					predicate: ({ queryKey }) =>
-						[
-							"recent-submissions",
-							"submissions-stats",
-							"submissions-monthly-stats",
-							"oms-policia-federal",
-						].includes(queryKey[0] as string),
-				});
-=======
->>>>>>> theirs
 				toast({
 					title: "Processo enviado com sucesso!",
 					description: "Obrigado por contribuir com a comunidade.",
