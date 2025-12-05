@@ -1,5 +1,5 @@
 import { supabaseClient } from "@/lib/supabaseClient";
-import type { OmEnum, ProcessTypeEnum } from "@/types/enums";
+import type { TypeEnum } from "@/types/enums";
 
 export type AggregatedStats = {
 	total: number;
@@ -16,25 +16,26 @@ export type MonthlyStat = {
 export type RecentSubmission = {
 	id: string;
 	createdAt: string;
-	om: OmEnum | "";
-	processType: ProcessTypeEnum | "";
+	om: string | null;
+	omId: number | null;
+	type: TypeEnum | "";
 	result: string;
 	avgDays: number | null;
 };
 
 export async function fetchSubmissionStats({
-	processType,
-	om,
+	type,
+	omId,
 	days,
 }: {
-	processType?: ProcessTypeEnum;
-	om?: OmEnum;
+	type?: TypeEnum;
+	omId?: number;
 	days: number;
 }): Promise<AggregatedStats> {
 	const { data, error } = await supabaseClient.rpc("get_submissions_stats", {
-		p_om: om ?? null,
+		p_om_id: omId ?? null,
 		p_period_to_days: days,
-		p_process_type: processType ?? null,
+		p_type: type ?? null,
 	});
 
 	if (error) {
@@ -45,17 +46,17 @@ export async function fetchSubmissionStats({
 }
 
 export async function fetchMonthlyStats({
-	processType,
-	om,
+	type,
+	omId,
 }: {
-	processType?: ProcessTypeEnum;
-	om?: OmEnum;
+	type?: TypeEnum;
+	omId?: number;
 }): Promise<MonthlyStat[]> {
 	const { data, error } = await supabaseClient.rpc(
 		"get_submissions_monthly_stats",
 		{
-			p_om: om ?? null,
-			p_process_type: processType ?? null,
+			p_om_id: omId ?? null,
+			p_type: type ?? null,
 		},
 	);
 
@@ -67,17 +68,17 @@ export async function fetchMonthlyStats({
 }
 
 export async function fetchRecentSubmissions({
-	processType,
-	om,
+	type,
+	omId,
 	limit = 6,
 }: {
-	processType?: ProcessTypeEnum;
-	om?: OmEnum;
+	type?: TypeEnum;
+	omId?: number;
 	limit?: number;
 } = {}): Promise<RecentSubmission[]> {
 	const { data, error } = await supabaseClient.rpc("get_recent_submissions", {
-		p_om: om ?? null,
-		p_process_type: processType ?? null,
+		p_om_id: omId ?? null,
+		p_type: type ?? null,
 		p_limit: limit,
 	});
 
@@ -85,5 +86,30 @@ export async function fetchRecentSubmissions({
 		throw error;
 	}
 
-	return (data ?? []) as RecentSubmission[];
+	return (data ?? []).map((item) => {
+		const omIdValue =
+			(item as { omId?: number | null }).omId ??
+			(item as { om_id?: number | null }).om_id ??
+			null;
+
+		return {
+			id: (item as { id: string }).id,
+			createdAt:
+				(item as { createdAt?: string }).createdAt ??
+				(item as { created_at?: string }).created_at ??
+				"",
+			om:
+				(item as { om?: string | null }).om ??
+				(item as { om_unit?: string | null }).om_unit ??
+				(item as { om_unit_name?: string | null }).om_unit_name ??
+				null,
+			omId: omIdValue,
+			type: (item as { type?: TypeEnum | "" }).type ?? "",
+			result: (item as { result?: string }).result ?? "",
+			avgDays:
+				(item as { avgDays?: number | null }).avgDays ??
+				(item as { days?: number | null }).days ??
+				null,
+		};
+	}) as RecentSubmission[];
 }

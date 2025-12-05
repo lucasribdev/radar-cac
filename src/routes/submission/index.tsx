@@ -1,10 +1,10 @@
 /** biome-ignore-all lint/correctness/noChildrenProp: <usamos a prop children no tanstack form> */
 import type { AnyFieldApi } from "@tanstack/react-form";
 import { useForm } from "@tanstack/react-form";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Send } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import ReCAPTCHA from "react-google-recaptcha";
 import { Combobox } from "@/components/Combobox";
 import { Button } from "@/components/ui/button";
@@ -21,31 +21,30 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabaseClient } from "@/lib/supabaseClient";
+import { fetchOms } from "@/services/oms";
 import {
-	type OmEnum,
-	PF_OM_OPTIONS,
 	PROCESS_RESULT_OPTIONS,
-	PROCESS_TYPE_OPTIONS,
 	type ProcessResultEnum,
-	type ProcessTypeEnum,
+	TYPE_OPTIONS,
+	type TypeEnum,
 } from "@/types/enums";
+import { toOmOption } from "@/types/oms";
 
 export const Route = createFileRoute("/submission/")({ component: Submission });
 
-const processTypeOptions = PROCESS_TYPE_OPTIONS;
+const typeOptions = TYPE_OPTIONS;
 const processResultOptions = PROCESS_RESULT_OPTIONS;
-const pfOmOptions = PF_OM_OPTIONS;
 type FormData = {
-	processType: ProcessTypeEnum | "";
-	om: OmEnum | "";
+	type: TypeEnum | "";
+	omId: string;
 	dateProtocol: string;
 	dateDecision: string;
 	result: ProcessResultEnum | "";
 };
 
 type SubmissionPayload = {
-	process_type: ProcessTypeEnum;
-	om: OmEnum;
+	type: TypeEnum;
+	om_id: number;
 	result: ProcessResultEnum;
 	date_protocol: string;
 	date_decision: string;
@@ -90,10 +89,20 @@ function Submission() {
 	const { mutateAsync: submitProcess, isPending } = useMutation({
 		mutationFn: submitViaEdgeFunction,
 	});
+	const {
+		data: oms = [],
+		isFetching: isLoadingOms,
+		error: omsError,
+	} = useQuery({
+		queryKey: ["oms"],
+		queryFn: fetchOms,
+	});
+
+	const omOptions = useMemo(() => oms.map(toOmOption), [oms]);
 
 	const defaultValues: FormData = {
-		processType: "",
-		om: "",
+		type: "",
+		omId: "",
 		dateProtocol: "",
 		dateDecision: "",
 		result: "",
@@ -120,11 +129,21 @@ function Submission() {
 				return;
 			}
 
-			if (!value.processType || !value.result || !value.om) {
+			if (!value.type || !value.result || !value.omId) {
 				toast({
 					variant: "destructive",
 					title: "Erro",
 					description: "Preencha todos os campos obrigatórios antes de enviar.",
+				});
+				return;
+			}
+
+			const omId = Number(value.omId);
+			if (!Number.isInteger(omId) || omId <= 0) {
+				toast({
+					variant: "destructive",
+					title: "Erro",
+					description: "Selecione uma OM válida.",
 				});
 				return;
 			}
@@ -163,8 +182,8 @@ function Submission() {
 			}
 
 			const payload: SubmissionPayload = {
-				process_type: value.processType,
-				om: value.om,
+				type: value.type,
+				om_id: omId,
 				result: value.result,
 				date_protocol: value.dateProtocol,
 				date_decision: value.dateDecision,
@@ -219,7 +238,7 @@ function Submission() {
 					>
 						<div className="space-y-2">
 							<form.Field
-								name="processType"
+								name="type"
 								validators={{
 									onChange: ({ value }) =>
 										!value ? "O tipo de processo é obrigatório" : undefined,
@@ -233,14 +252,14 @@ function Submission() {
 												name={field.name}
 												value={field.state.value}
 												onValueChange={(value) =>
-													field.handleChange(value as FormData["processType"])
+													field.handleChange(value as FormData["type"])
 												}
 											>
 												<SelectTrigger className="w-full">
 													<SelectValue placeholder="Selecione o tipo" />
 												</SelectTrigger>
 												<SelectContent>
-													{processTypeOptions.map((tipo) => (
+													{typeOptions.map((tipo) => (
 														<SelectItem key={tipo.value} value={tipo.value}>
 															{tipo.label}
 														</SelectItem>
@@ -256,7 +275,7 @@ function Submission() {
 
 						<div className="space-y-2">
 							<form.Field
-								name="om"
+								name="omId"
 								validators={{
 									onChange: ({ value }) =>
 										!value ? "A OM é obrigatória" : undefined,
@@ -269,15 +288,32 @@ function Submission() {
 												OM da Polícia Federal *
 											</Label>
 											<Combobox
-												options={pfOmOptions}
+												options={omOptions}
 												value={field.state.value}
 												onChange={(value) =>
-													field.handleChange(value as FormData["om"])
+													field.handleChange(value as FormData["omId"])
 												}
-												placeholder="Selecione a OM"
+												placeholder={
+													isLoadingOms
+														? "Carregando OMs..."
+														: omsError
+															? "Erro ao carregar OMs"
+															: "Selecione a OM"
+												}
 												searchPlaceholder="Pesquisar a OM"
-												emptyMessage="Nenhuma OM encontrada."
+												emptyMessage={
+													omsError
+														? "Erro ao carregar OMs."
+														: isLoadingOms
+															? "Carregando OMs..."
+															: "Nenhuma OM encontrada."
+												}
 											/>
+											{omsError ? (
+												<p className="text-sm text-destructive">
+													Não foi possível carregar a lista de OMs.
+												</p>
+											) : null}
 											<FieldInfo field={field} />
 										</>
 									);

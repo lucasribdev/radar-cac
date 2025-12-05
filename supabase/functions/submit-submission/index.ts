@@ -7,7 +7,7 @@ const corsHeaders = {
 		"authorization, x-client-info, apikey, content-type",
 };
 
-const PROCESS_TYPES = [
+const TYPES = [
 	"CR_OBTER",
 	"CR_REVALIDAR",
 	"CR_APOSTILAR",
@@ -28,13 +28,13 @@ const PROCESS_TYPES = [
 	"REGISTRO_ARMA_SEGUNDA_VIA_OBTER",
 	"GUIA_TRÁFEGO_ESPECIAL_OBTER",
 ] as const;
-type ProcessType = (typeof PROCESS_TYPES)[number];
+type Type = (typeof TYPES)[number];
 
-const allowedProcessTypes = new Set(PROCESS_TYPES);
+const allowedTypes = new Set(TYPES);
 
 type SubmissionPayload = {
-	process_type: ProcessType;
-	om: string;
+	type: Type;
+	om_id: number;
 	result: "DEFERIDO" | "INDEFERIDO";
 	date_protocol: string;
 	date_decision: string;
@@ -119,8 +119,8 @@ serve(async (req) => {
 	}
 
 	const {
-		process_type,
-		om,
+		type,
+		om_id,
 		result,
 		date_protocol,
 		date_decision,
@@ -128,16 +128,15 @@ serve(async (req) => {
 	} = payload;
 
 	if (
-		!process_type ||
-		!allowedProcessTypes.has(process_type) ||
+		!type ||
+		!allowedTypes.has(type) ||
 		!result ||
 		!allowedResults.has(result)
 	) {
 		return errorResponse(400, "Tipo de processo ou resultado inválido");
 	}
 
-	const omNormalized = om?.trim().toUpperCase();
-	if (!omNormalized || omNormalized.length < 3) {
+	if (!Number.isInteger(om_id) || om_id <= 0) {
 		return errorResponse(400, "OM inválida");
 	}
 
@@ -183,9 +182,20 @@ serve(async (req) => {
 		auth: { autoRefreshToken: false, persistSession: false },
 	});
 
+	const { data: omRecord, error: omError } = await supabaseClient
+		.from("oms")
+		.select("id")
+		.eq("id", om_id)
+		.maybeSingle();
+
+	if (omError || !omRecord) {
+		console.error("om lookup error", omError);
+		return errorResponse(400, "OM inválida");
+	}
+
 	const { error } = await supabaseClient.from("submissions").insert({
-		process_type,
-		om: omNormalized,
+		type,
+		om_id,
 		result,
 		date_protocol,
 		date_decision,

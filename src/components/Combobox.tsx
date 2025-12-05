@@ -72,10 +72,10 @@ export function Combobox({
 							{options.map((option) => (
 								<CommandItem
 									key={option.value}
-									value={option.value}
-									onSelect={(currentValue) => {
-										const newValue = currentValue === value ? "" : currentValue;
-										onChange(newValue);
+									// value used for filtering; include label and id so busca pega ambos
+									value={`${option.label} ${option.value}`}
+									onSelect={() => {
+										onChange(value === option.value ? "" : option.value);
 										setOpen(false);
 									}}
 								>

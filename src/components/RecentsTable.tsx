@@ -1,11 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { formatDate, formatDays } from "@/lib/format";
 import { fetchRecentSubmissions } from "@/services/submissions";
-import {
-	getProcessTypeLabel,
-	type OmEnum,
-	type ProcessTypeEnum,
-} from "@/types/enums";
+import { getTypeLabel, type TypeEnum } from "@/types/enums";
 import { EmptyState, ErrorState, TableSkeleton } from "./LoadingStates";
 import { Badge } from "./ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
@@ -19,19 +15,19 @@ import {
 } from "./ui/table";
 
 interface RecentsTableProps {
-	processType: ProcessTypeEnum;
-	om: OmEnum;
+	type: TypeEnum;
+	omId: number;
 }
 
-export const RecentsTable = ({ processType, om }: RecentsTableProps) => {
+export const RecentsTable = ({ type, omId }: RecentsTableProps) => {
 	const {
 		data: recentSubmissions = [],
 		isFetching: isLoadingRecents,
 		error: recentsError,
 		refetch: refetchRecents,
 	} = useQuery({
-		queryKey: ["recent-submissions", processType, om],
-		queryFn: () => fetchRecentSubmissions({ processType, om }),
+		queryKey: ["recent-submissions", type, omId],
+		queryFn: () => fetchRecentSubmissions({ type, omId }),
 	});
 
 	if (isLoadingRecents) {
@@ -78,10 +74,10 @@ export const RecentsTable = ({ processType, om }: RecentsTableProps) => {
 								<TableCell className="text-muted-foreground">
 									{formatDate(submission.createdAt)}
 								</TableCell>
-								<TableCell className="font-medium">{submission.om}</TableCell>
-								<TableCell>
-									{getProcessTypeLabel(submission.processType)}
+								<TableCell className="font-medium">
+									{submission.om ?? (submission.omId ? String(submission.omId) : "N/D")}
 								</TableCell>
+								<TableCell>{getTypeLabel(submission.type)}</TableCell>
 								<TableCell>{formatDays(submission.avgDays)}</TableCell>
 								<TableCell>
 									<Badge

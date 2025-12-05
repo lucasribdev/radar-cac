@@ -3,13 +3,13 @@ import { Calendar, FileText, TrendingUp } from "lucide-react";
 import { formatDays, formatNumber } from "@/lib/format";
 import type { PeriodValue } from "@/routes";
 import { fetchSubmissionStats } from "@/services/submissions";
-import type { OmEnum, ProcessTypeEnum } from "@/types/enums";
+import type { TypeEnum } from "@/types/enums";
 import { EmptyState, ErrorState, StatCardSkeleton } from "./LoadingStates";
 import { StatCard } from "./StatCard";
 
 interface ProcessStatsProps {
-	processType: ProcessTypeEnum;
-	om: OmEnum;
+	type: TypeEnum;
+	omId: number;
 	period: PeriodValue;
 }
 
@@ -20,11 +20,7 @@ const periodToDays: Record<PeriodValue, number> = {
 	"12m": 365,
 };
 
-export const ProcessStats = ({
-	processType,
-	om,
-	period,
-}: ProcessStatsProps) => {
+export const ProcessStats = ({ type, omId, period }: ProcessStatsProps) => {
 	const {
 		data: aggregatedStats = {
 			total: 0,
@@ -36,11 +32,11 @@ export const ProcessStats = ({
 		error: statsError,
 		refetch: refetchStats,
 	} = useQuery({
-		queryKey: ["submissions-stats", processType, om, period],
+		queryKey: ["submissions-stats", type, omId, period],
 		queryFn: () =>
 			fetchSubmissionStats({
-				processType,
-				om,
+				type,
+				omId,
 				days: periodToDays[period],
 			}),
 	});

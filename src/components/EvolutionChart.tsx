@@ -9,24 +9,24 @@ import {
 	YAxis,
 } from "recharts";
 import { fetchMonthlyStats } from "@/services/submissions";
-import type { OmEnum, ProcessTypeEnum } from "@/types/enums";
+import type { TypeEnum } from "@/types/enums";
 import { ChartSkeleton, EmptyState, ErrorState } from "./LoadingStates";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 
 interface EvolutionChartProps {
-	processType?: ProcessTypeEnum;
-	om?: OmEnum;
+	type?: TypeEnum;
+	omId?: number;
 }
 
-export const EvolutionChart = ({ processType, om }: EvolutionChartProps) => {
+export const EvolutionChart = ({ type, omId }: EvolutionChartProps) => {
 	const {
 		data: chartData = [],
 		isFetching: isLoadingEvolution,
 		error: chartError,
 		refetch: refetchChart,
 	} = useQuery({
-		queryKey: ["submissions-monthly-stats", processType, om],
-		queryFn: () => fetchMonthlyStats({ processType, om }),
+		queryKey: ["submissions-monthly-stats", type, omId],
+		queryFn: () => fetchMonthlyStats({ type, omId }),
 	});
 
 	if (isLoadingEvolution) {

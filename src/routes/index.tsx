@@ -1,5 +1,6 @@
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Combobox } from "@/components/Combobox";
 import { EmptyState } from "@/components/LoadingStates";
 import { ProcessStats } from "@/components/ProcessStats";
@@ -13,16 +14,14 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import {
-	type OmEnum,
-	PF_OM_OPTIONS,
-	PROCESS_TYPE_OPTIONS,
-} from "@/types/enums";
+import { fetchOms } from "@/services/oms";
+import { TYPE_OPTIONS } from "@/types/enums";
+import { toOmOption } from "@/types/oms";
 
 export const Route = createFileRoute("/")({ component: App });
 
-const processTypeOptions = PROCESS_TYPE_OPTIONS;
-type ProcessTypeValue = (typeof PROCESS_TYPE_OPTIONS)[number]["value"];
+const typeOptions = TYPE_OPTIONS;
+type TypeValue = (typeof TYPE_OPTIONS)[number]["value"];
 
 const periodOptions = [
 	{ value: "7d", label: "Últimos 7 dias" },
@@ -32,15 +31,26 @@ const periodOptions = [
 ] as const;
 
 export type PeriodValue = (typeof periodOptions)[number]["value"];
-type OmValue = OmEnum;
-const omOptions: { value: OmValue; label: string }[] = PF_OM_OPTIONS;
+type OmValue = string;
 
 function App() {
-	const [processType, setProcessType] = useState<ProcessTypeValue | "">(
-		"AQUISICAO_ARMA_SOLICITAR",
-	);
-	const [om, setOm] = useState<OmValue | "">("SR/PF/SP");
+	const {
+		data: oms = [],
+		isFetching: isLoadingOms,
+		error: omsError,
+	} = useQuery({
+		queryKey: ["oms"],
+		queryFn: fetchOms,
+	});
+
+	const omOptions = useMemo(() => oms.map((om) => toOmOption(om)), [oms]);
+
+	const [type, setType] = useState<TypeValue | "">("AQUISICAO_ARMA_SOLICITAR");
+	const [om, setOm] = useState<OmValue | "">("UCAC/DELEARM/DREX/SR/PF/SP");
 	const [period, setPeriod] = useState<PeriodValue>("90d");
+
+	const selectedOmId = om ? Number(om) : undefined;
+	const isOmSelected = Number.isFinite(selectedOmId);
 
 	return (
 		<div className="container mx-auto px-4 py-8 space-y-8">
@@ -60,16 +70,14 @@ function App() {
 								Tipo de Processo
 							</Label>
 							<Select
-								value={processType}
-								onValueChange={(value) =>
-									setProcessType(value as ProcessTypeValue)
-								}
+								value={type}
+								onValueChange={(value) => setType(value as TypeValue)}
 							>
 								<SelectTrigger className="w-full">
 									<SelectValue placeholder="Selecione o processo" />
 								</SelectTrigger>
 								<SelectContent>
-									{processTypeOptions.map((tipo) => (
+									{typeOptions.map((tipo) => (
 										<SelectItem key={tipo.value} value={tipo.value}>
 											{tipo.label}
 										</SelectItem>
@@ -86,10 +94,27 @@ function App() {
 								options={omOptions}
 								value={om}
 								onChange={(value) => setOm(value as OmValue)}
-								placeholder="Selecione a OM"
+								placeholder={
+									isLoadingOms
+										? "Carregando OMs..."
+										: omsError
+											? "Erro ao carregar OMs"
+											: "Selecione a OM"
+								}
 								searchPlaceholder="Pesquisar a OM..."
-								emptyMessage="Nenhuma OM encontrada."
+								emptyMessage={
+									omsError
+										? "Erro ao carregar OMs."
+										: isLoadingOms
+											? "Carregando OMs..."
+											: "Nenhuma OM encontrada."
+								}
 							/>
+							{omsError ? (
+								<p className="text-sm text-destructive">
+									Não foi possível carregar a lista de OMs.
+								</p>
+							) : null}
 						</div>
 
 						<div className="space-y-2">
@@ -116,7 +141,7 @@ function App() {
 				</CardContent>
 			</Card>
 
-			{processType === "" || om === "" ? (
+			{type === "" || !isOmSelected ? (
 				<EmptyState
 					title="Selecione os filtros"
 					description="Escolha o tipo de processo e a OM da Polícia Federal para visualizar as estatísticas."
@@ -124,13 +149,13 @@ function App() {
 			) : (
 				<>
 					{/* Cards de Estatísticas */}
-					<ProcessStats processType={processType} om={om} period={period} />
+					<ProcessStats type={type} omId={selectedOmId!} period={period} />
 
 					{/* Gráfico */}
-					{/* <EvolutionChart processType={processType} om={om} /> */}
+					{/* <EvolutionChart type={type} omId={selectedOmId!} /> */}
 
 					{/* Tabela de Envios Recentes */}
-					<RecentsTable processType={processType} om={om} />
+					<RecentsTable type={type} omId={selectedOmId!} />
 				</>
 			)}
 		</div>
