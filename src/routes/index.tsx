@@ -46,7 +46,7 @@ function App() {
 	const omOptions = useMemo(() => oms.map((om) => toOmOption(om)), [oms]);
 
 	const [type, setType] = useState<TypeValue | "">("AQUISICAO_ARMA_SOLICITAR");
-	const [om, setOm] = useState<OmValue | "">("UCAC/DELEARM/DREX/SR/PF/SP");
+	const [om, setOm] = useState<OmValue | "">("27");
 	const [period, setPeriod] = useState<PeriodValue>("90d");
 
 	const selectedOmId = om ? Number(om) : undefined;
