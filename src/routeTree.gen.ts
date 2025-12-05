@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SubmissionIndexRouteImport } from './routes/submission/index'
 import { Route as RecentsIndexRouteImport } from './routes/recents/index'
+import { Route as OmsIndexRouteImport } from './routes/oms/index'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -28,33 +29,42 @@ const RecentsIndexRoute = RecentsIndexRouteImport.update({
   path: '/recents/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OmsIndexRoute = OmsIndexRouteImport.update({
+  id: '/oms/',
+  path: '/oms/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/oms': typeof OmsIndexRoute
   '/recents': typeof RecentsIndexRoute
   '/submission': typeof SubmissionIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/oms': typeof OmsIndexRoute
   '/recents': typeof RecentsIndexRoute
   '/submission': typeof SubmissionIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/oms/': typeof OmsIndexRoute
   '/recents/': typeof RecentsIndexRoute
   '/submission/': typeof SubmissionIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/recents' | '/submission'
+  fullPaths: '/' | '/oms' | '/recents' | '/submission'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/recents' | '/submission'
-  id: '__root__' | '/' | '/recents/' | '/submission/'
+  to: '/' | '/oms' | '/recents' | '/submission'
+  id: '__root__' | '/' | '/oms/' | '/recents/' | '/submission/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  OmsIndexRoute: typeof OmsIndexRoute
   RecentsIndexRoute: typeof RecentsIndexRoute
   SubmissionIndexRoute: typeof SubmissionIndexRoute
 }
@@ -82,11 +92,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RecentsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/oms/': {
+      id: '/oms/'
+      path: '/oms'
+      fullPath: '/oms'
+      preLoaderRoute: typeof OmsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  OmsIndexRoute: OmsIndexRoute,
   RecentsIndexRoute: RecentsIndexRoute,
   SubmissionIndexRoute: SubmissionIndexRoute,
 }

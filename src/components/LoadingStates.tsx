@@ -60,7 +60,19 @@ export const TableSkeleton = ({ rows = 5 }: { rows?: number }) => (
 	</Card>
 );
 
-export const FiltersSkeleton = () => (
+export const FiltersOmsSkeleton = () => (
+	<Card>
+		<CardContent>
+			<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+				<div className="space-y-2">
+					<Skeleton className="h-10 w-full" />
+				</div>
+			</div>
+		</CardContent>
+	</Card>
+);
+
+export const FiltersIndexSkeleton = () => (
 	<Card>
 		<CardContent className="pt-6">
 			<div className="grid grid-cols-1 md:grid-cols-3 gap-4">

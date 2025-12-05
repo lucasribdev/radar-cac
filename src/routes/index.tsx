@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Combobox } from "@/components/Combobox";
-import { EmptyState } from "@/components/LoadingStates";
+import { EmptyState, FiltersIndexSkeleton } from "@/components/LoadingStates";
 import { ProcessStats } from "@/components/ProcessStats";
 import { RecentsTable } from "@/components/RecentsTable";
 import { Card, CardContent } from "@/components/ui/card";
@@ -62,84 +62,88 @@ function App() {
 			</div>
 
 			{/* Filtros */}
-			<Card>
-				<CardContent className="pt-6">
-					<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-						<div className="space-y-2">
-							<Label className="text-sm font-medium text-foreground">
-								Tipo de Processo
-							</Label>
-							<Select
-								value={type}
-								onValueChange={(value) => setType(value as TypeValue)}
-							>
-								<SelectTrigger className="w-full">
-									<SelectValue placeholder="Selecione o processo" />
-								</SelectTrigger>
-								<SelectContent>
-									{typeOptions.map((tipo) => (
-										<SelectItem key={tipo.value} value={tipo.value}>
-											{tipo.label}
-										</SelectItem>
-									))}
-								</SelectContent>
-							</Select>
-						</div>
+			{isLoadingOms ? (
+				<FiltersIndexSkeleton />
+			) : (
+				<Card>
+					<CardContent className="pt-6">
+						<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+							<div className="space-y-2">
+								<Label className="text-sm font-medium text-foreground">
+									Tipo de Processo
+								</Label>
+								<Select
+									value={type}
+									onValueChange={(value) => setType(value as TypeValue)}
+								>
+									<SelectTrigger className="w-full">
+										<SelectValue placeholder="Selecione o processo" />
+									</SelectTrigger>
+									<SelectContent>
+										{typeOptions.map((tipo) => (
+											<SelectItem key={tipo.value} value={tipo.value}>
+												{tipo.label}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+							</div>
 
-						<div className="space-y-2">
-							<Label className="text-sm font-medium text-foreground">
-								OM da Polícia Federal
-							</Label>
-							<Combobox
-								options={omOptions}
-								value={om}
-								onChange={(value) => setOm(value as OmValue)}
-								placeholder={
-									isLoadingOms
-										? "Carregando OMs..."
-										: omsError
-											? "Erro ao carregar OMs"
-											: "Selecione a OM"
-								}
-								searchPlaceholder="Pesquisar a OM..."
-								emptyMessage={
-									omsError
-										? "Erro ao carregar OMs."
-										: isLoadingOms
+							<div className="space-y-2">
+								<Label className="text-sm font-medium text-foreground">
+									OM da Polícia Federal
+								</Label>
+								<Combobox
+									options={omOptions}
+									value={om}
+									onChange={(value) => setOm(value as OmValue)}
+									placeholder={
+										isLoadingOms
 											? "Carregando OMs..."
-											: "Nenhuma OM encontrada."
-								}
-							/>
-							{omsError ? (
-								<p className="text-sm text-destructive">
-									Não foi possível carregar a lista de OMs.
-								</p>
-							) : null}
-						</div>
+											: omsError
+												? "Erro ao carregar OMs"
+												: "Selecione a OM"
+									}
+									searchPlaceholder="Pesquisar a OM..."
+									emptyMessage={
+										omsError
+											? "Erro ao carregar OMs."
+											: isLoadingOms
+												? "Carregando OMs..."
+												: "Nenhuma OM encontrada."
+									}
+								/>
+								{omsError ? (
+									<p className="text-sm text-destructive">
+										Não foi possível carregar a lista de OMs.
+									</p>
+								) : null}
+							</div>
 
-						<div className="space-y-2">
-							<Label className="text-sm font-medium text-foreground">
-								Período
-							</Label>
-							<Select
-								value={period}
-								onValueChange={(value) => setPeriod(value as PeriodValue)}
-							>
-								<SelectTrigger className="w-full">
-									<SelectValue />
-								</SelectTrigger>
-								<SelectContent>
-									{periodOptions.map((per) => (
-										<SelectItem key={per.value} value={per.value}>
-											{per.label}
-										</SelectItem>
-									))}
-								</SelectContent>
-							</Select>
+							<div className="space-y-2">
+								<Label className="text-sm font-medium text-foreground">
+									Período
+								</Label>
+								<Select
+									value={period}
+									onValueChange={(value) => setPeriod(value as PeriodValue)}
+								>
+									<SelectTrigger className="w-full">
+										<SelectValue />
+									</SelectTrigger>
+									<SelectContent>
+										{periodOptions.map((per) => (
+											<SelectItem key={per.value} value={per.value}>
+												{per.label}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+							</div>
 						</div>
-					</div>
-				</CardContent>
-			</Card>
+					</CardContent>
+				</Card>
+			)}
 
 			{type === "" || !isOmSelected ? (
 				<EmptyState

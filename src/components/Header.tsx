@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { History, Home, Menu, Send, X } from "lucide-react";
+import { History, Home, MailIcon, Menu, Send, X } from "lucide-react";
 import { useState } from "react";
 
 export default function Header() {
@@ -74,6 +74,18 @@ export default function Header() {
 					>
 						<History size={20} />
 						<span className="font-medium">Recentes</span>
+					</Link>
+					<Link
+						to="/oms"
+						onClick={() => setIsOpen(false)}
+						className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors mb-2"
+						activeProps={{
+							className:
+								"flex items-center gap-3 p-3 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors mb-2",
+						}}
+					>
+						<MailIcon size={20} />
+						<span className="font-medium">Contatos</span>
 					</Link>
 				</nav>
 			</aside>
